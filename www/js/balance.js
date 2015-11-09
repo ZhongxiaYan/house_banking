@@ -23,7 +23,7 @@ $(document).ready(function() {
     $('.deposit-edit-button').click(make_deposit_form); // create a form to edit a deposit when clicked
 
     $('.deposit-delete-button').click(function(e) { // deletes the deposit
-    	if (!confirm('Are you sure you want to delete this deposit? (This cannot be undone).')){
+    	if (!confirm('Are you sure you want to delete this deposit? (This cannot be undone).')) {
             e.preventDefault();
             return false;
         }
@@ -49,11 +49,11 @@ $(document).ready(function() {
     $('.transaction-edit-button').click(make_transaction_form); // makes a form to edit the transaction when clicked
     $('.transaction-delete-button').click(function(e) {
     	// single transaction warning
-    	if ($(this).parent().siblings('input').val() === 's' && !confirm('Delete this transaction? (This cannot be undone).')){
+    	if ($(this).parent().siblings('input').val() === 's' && !confirm('Delete this transaction? (This cannot be undone).')) {
             e.preventDefault();
             return false;
         // repeated transaction warning
-        } else if (!confirm('Delete every instance of this repeated transaction? (This cannot be undone)')) {
+        } else if ($(this).parent().siblings('input').val() === 'r' && !confirm('Delete every instance of this repeated transaction? (This cannot be undone)')) {
         	e.preventDefault();
             return false;
         }
@@ -76,6 +76,7 @@ $(document).ready(function() {
     		$(this).parent('.form-group').siblings('.trans-start-date').children('label').text('Date:');
     	}
     }).trigger('change');
+
 });
 
 // gets user selected by trans-paid-by field
@@ -111,7 +112,7 @@ function adjust_display_compensation(user_amounts, total_amount, selected_id) {
 function split_total_amount() {
 	var form = $(this).closest('form');
 	var selected_id = form.find('#trans-paid-by option:selected').val();
-	var total_amount = $(this).val();
+	var total_amount = parseFloat($(this).val());
 	total_amount = Math.ceil(100 * total_amount) / 100;
 	$(this).val(total_amount);
 	var amounts = form.find('.user-amount');
@@ -142,7 +143,10 @@ function make_deposit_form() {
 
 	// set the default values of all the fields to be existing info
 	deposit_form.find(':input').each(function() {
-		$(this).val(deposit_info[$(this).attr('name')]);
+		var field_name = $(this).attr('name');
+		if (deposit_info.hasOwnProperty(field_name)) { // field should be changed
+			$(this).val(deposit_info[field_name]);
+		}
 	});
 
 	// changes form submission information
@@ -178,32 +182,21 @@ function make_transaction_form() {
 	// stores information in the table into a map
 	var trans_info = new Object;
 	$(this).closest('tr').prev().children('td').each(function() {
-		trans_info[$(this).attr('type')] = $(this).text();
+		var type = $(this).attr('type');
+		if (type === 'trans-paid-by') { // for trans-paid-by cell, use the user-id attribute
+			trans_info[type] = $(this).attr('user-id');
+		} else {
+			trans_info[type] = $(this).text();
+		}
 	});
 	$(this).closest('td').find('div').each(function() {
 		var user_id = $(this).attr('user-id');
 		if (typeof user_id !== typeof undefined && user_id !== false) {
-			trans_info['user_' + $(this).attr('user-id') + '_amount'] = $(this).text().split(': ')[1];
+			trans_info['user_' + $(this).attr('user-id') + '_amount'] = parseFloat($(this).text().split(': ')[1]);
 		}
 	});
 
-	// find selected payer and calculate how much he's supposed to pay
-	var selected_payer;
-	trans_form.find('#trans-paid-by').each(function() {
-		$(this).children().each(function(index) {
-			if (typeof selected_payer === 'undefined' && index === 0) {
-				selected_payer = $(this);
-			}
-			if ($(this).val() === trans_info['trans-paid-by']) { // check if user-id of this person is same as the payer's
-				selected_payer = $(this);
-				trans_info['user_' + $(this).val() + '_amount'] = parseFloat(trans_info['user_' + $(this).val() + '_amount']) + parseFloat(trans_info['trans-total-amount']);
-			}
-		});
-	});
-	trans_form.append('<input type="hidden" name="trans-id">');
-	trans_info['trans-id'] = repeat_info_carrier.attr('trans-id');
-
-	// deal with transactions that repeat
+	// deal with transactions that repeat. Take info stored in hidden field
 	trans_form.find('.trans-repeat-toggle').remove(); // remove the toggle and add a hidden field signaling repeat if needed
 	if (repeat_info_carrier.val() === 'r') { // for repeated events
 		trans_form.append('<input type="hidden" name="trans-repeat">');
@@ -221,16 +214,48 @@ function make_transaction_form() {
 		trans_form.children('.trans-repeat-info').remove();
 	}
 
+	// find selected payer and calculate how much he's supposed to pay
+	var selected_payer;
+	trans_form.find('#trans-paid-by').each(function() {
+		$(this).children().each(function(index) {
+			if (typeof selected_payer === 'undefined' && index === 0) {
+				selected_payer = $(this);
+			}
+			if ($(this).val() === trans_info['trans-paid-by']) { // check if user-id of this person is same as the payer's
+				selected_payer = $(this);
+				trans_info['user_' + $(this).val() + '_amount'] = trans_info['user_' + $(this).val() + '_amount'] + parseFloat(trans_info['trans-total-amount']);
+			}
+		});
+	});
+	console.log(trans_info['trans-interval-unit']);
+	// find selected unit
+	var selected_unit;
+	trans_form.find('#trans-interval-unit').each(function() {
+		$(this).children().each(function(index) {
+			if (typeof selected_unit === 'undefined' && index === 0) {
+				selected_unit = $(this);
+			}
+			if ($(this).val() === trans_info['trans-interval-unit']) {
+				selected_unit = $(this);
+			}
+		});
+	});
+	trans_form.append('<input type="hidden" name="trans-id">');
+	trans_info['trans-id'] = repeat_info_carrier.attr('trans-id');
+
 	// set the default values of all the fields to be existing info
 	trans_form.find(':input').each(function() {
-		$(this).val(trans_info[$(this).attr('name')]);
+		var field_name = $(this).attr('name');
+		if (trans_info.hasOwnProperty(field_name)) { // field should be changed
+			$(this).val(trans_info[field_name]);
+		}
 	});
 
 	// append form to the row entry, set up listeners
 	$(this).closest('td').append(trans_form);
 	selected_payer.attr('selected', 'selected');
-	trans_form.find('#trans-paid-by').change(choose_paid_user);
-    trans_form.find('#trans-total-amount').blur(split_total_amount);
+	selected_unit.attr('selected', 'selected');
+	trans_form.find('#trans-paid-by').change(choose_paid_user).change();
 
 	$(this).unbind().click(cancel_transaction_form);
 	$(this).text('Cancel');

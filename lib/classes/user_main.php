@@ -3,31 +3,36 @@
 
 class UserMain {
 
+	public $id;
+	public $name;
+	public $session_token;
+	public $is_verified;
+	public $is_admin;
+	public $is_deleted;
+
 	private $transactions_s;
 	private $transactions_r;
 	private $deposits;
-	private $user_id;
-	private $user_name;
 	private $db;
 	private $pay_table;
 	private $trans_table;
 
-	public function __construct($user_id, $name, $db, $deposit_table, $trans_single_table, $trans_repeated_table) {
-		$this->user_id = $user_id;
-		$this->user_name = $name;
+	public function __construct($user_id, $user_session_token, $name, $verified, $admin, $deleted, $db, $deposit_table, $trans_single_table, $trans_repeated_table) {
+		$this->id = $user_id;
+		$this->session_token = $user_session_token;
+		$this->is_verified = $verified;
+		$this->is_admin = $admin;
+		$this->is_deleted = $deleted;
+		$this->name = $name;
 		$this->db = $db;
 		$this->pay_table = $deposit_table;
 		$this->trans_table = $trans_single_table;
 		$this->trans_table_r = $trans_repeated_table;
 	}
 
-	public function get_balance() {
-		return 0;
-	}
-
 	public function get_single_transactions($all) {
 		$query = sprintf('SELECT * FROM %s%s ORDER BY action_time DESC;', $this->trans_table,
-							($all ? '' : (' WHERE abs(user_' . $this->user_id . '_amount) > 1e-6')));
+							($all ? '' : (' WHERE abs(user_' . $this->id . '_amount) > 1e-6')));
 		return $this->transactions_s = $this->db->query($query);
 	}
 
@@ -48,7 +53,7 @@ class UserMain {
 		}
 		$query = $query_head . $query_tail . ');';
 		$stmt = $this->db->prepare($query);
-		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$action_time, &$this->user_name), $user_amounts_ref);
+		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$action_time, &$this->name), $user_amounts_ref);
 		if (!call_user_func_array(array($stmt, 'bind_param'), $args)) {
 			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
 		}
@@ -74,7 +79,7 @@ class UserMain {
 		$parameter_str .= 'i';
 		$query = $query_head . $query_tail;
 		$stmt = $this->db->prepare($query);
-		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$action_time, &$this->user_name), $user_amounts_ref, array(&$trans_id));
+		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$action_time, &$this->name), $user_amounts_ref, array(&$trans_id));
 		if (!call_user_func_array(array($stmt, 'bind_param'), $args)) {
 			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
 		}
@@ -96,7 +101,7 @@ class UserMain {
 
 	public function get_repeated_transactions($all) {
 		$query = sprintf('SELECT * FROM %s%s;', $this->trans_table_r,
-							($all ? '' : (' WHERE abs(user_' . $this->user_id . '_amount) > 1e-6')));
+							($all ? '' : (' WHERE abs(user_' . $this->id . '_amount) > 1e-6')));
 		return $this->transactions_r = $this->db->query($query);
 	}
 
@@ -117,7 +122,7 @@ class UserMain {
 		}
 		$query = $query_head . $query_tail . ');';
 		$stmt = $this->db->prepare($query);
-		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$start_date, &$end_date, &$repeat_interval_unit, &$repeat_interval_num, &$this->user_name), $user_amounts_ref);
+		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$start_date, &$end_date, &$repeat_interval_unit, &$repeat_interval_num, &$this->name), $user_amounts_ref);
 		if (!call_user_func_array(array($stmt, 'bind_param'), $args)) {
 			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
 		}
@@ -143,7 +148,7 @@ class UserMain {
 		$parameter_str .= 'i';
 		$query = $query_head . $query_tail;
 		$stmt = $this->db->prepare($query);
-		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$start_date, &$end_date, &$repeat_interval_unit, &$repeat_interval_num, &$this->user_name), $user_amounts_ref, array(&$trans_id));
+		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$start_date, &$end_date, &$repeat_interval_unit, &$repeat_interval_num, &$this->name), $user_amounts_ref, array(&$trans_id));
 		if (!call_user_func_array(array($stmt, 'bind_param'), $args)) {
 			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
 		}
@@ -163,10 +168,10 @@ class UserMain {
 		}
 	}
 
-	public function get_deposits() {
+	public function get_deposits($all) {
 		$query = sprintf('SELECT * 
-							FROM %s WHERE user_id = %d ORDER BY action_time DESC;',
-							$this->pay_table, $this->user_id);
+							FROM %s%s ORDER BY action_time DESC;',
+							$this->pay_table, ($all ? '' : (' WHERE user_id = ' . $this->id)));
 		return $this->deposits = $this->db->query($query);
 	}
 
@@ -174,7 +179,7 @@ class UserMain {
 		$query = sprintf('INSERT INTO %s (name, user_id, user_name, amount, action_time, note) 
 							VALUES (?, ?, ?, ?, ?, ?);', $this->pay_table);
 		$stmt = $this->db->prepare($query);
-		if (!$stmt->bind_param('sisdss', $name, $this->user_id, $this->user_name, $amount, $datetime, $note)) {
+		if (!$stmt->bind_param('sisdss', $name, $this->id, $this->name, $amount, $datetime, $note)) {
 			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
 		}
 		if (!$stmt->execute()) {

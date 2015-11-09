@@ -12,7 +12,7 @@
 
 		<script src="js/jquery-2.1.4.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
-		<script src="js/script.js"></script>
+		<script src="js/balance.js"></script>
 		<style>
 
 			#adjustment-amount {
@@ -51,12 +51,11 @@
 	</head>
 	<body>
 		<?php
-
 			require_once 'navbar.php';
 		?>
 		<h1>Create New:</h1>
 		<h4>Deposit:</h4>
-		<form class="form-inline" role="form" action="balance.php?submission=deposit" method="post" id="deposit-form">
+		<form class="form-inline" role="form" action="balance.php?submission=deposit_submit" method="post" id="deposit-form">
 			<div class="form-group">
 				<label>Name:</label>
 				<input type="text" class="form-control" name="deposit-name">
@@ -77,6 +76,7 @@
 				<label>Note:</label>
 				<textarea class="form-control" rows="2" name="deposit-note"></textarea>
 			</div>
+			<input type="hidden" name="session_token" value=<?php echo '"' . htmlspecialchars($curr_user->session_token) . '"' ?>>
 			<button type="submit" class="btn btn-default">Submit</button>
 		</form>
 		<h4>Transaction:</h4>
@@ -146,6 +146,7 @@
 			?>
 			
 			<br><br>
+			<input type="hidden" name="session_token" value=<?php echo '"' . htmlspecialchars($curr_user->session_token) . '"' ?>>
 			<button type="submit" class="btn btn-default">Submit</button>
 		</form>
 
@@ -155,3 +156,6 @@
 		?>
 	</body>
 </html>
+<?php
+	require_once 'closer.php';
+?>

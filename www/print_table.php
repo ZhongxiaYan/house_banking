@@ -1,34 +1,30 @@
 <?php
 
-$user_amount = 'user_' . $user_id . '_amount';
+$user_amount = 'user_' . $curr_user->id . '_amount';
 $id_to_user['0'] = 'Bank'; // adds bank as a user for printing tables
 
-$deposits = $curr_user->get_deposits();
+$deposits = $curr_user->get_deposits(0);
 $deposit_array = array();
-$index = 0;
 $total_balance = 0.0; // sum up the cost for every transaction then subtract as we go
 while ($row = $deposits->fetch_assoc()) {
-	$deposit_array[$index] = $row;
+	$deposit_array[] = $row;
 	$total_balance += floatval($row['amount']);
-	$index++;
 }
 
 $transactions = $curr_user->get_single_transactions(0);
 $trans_array = array();
-$index = 0;
 while ($row = $transactions->fetch_assoc()) {
 	$row['repeated'] = 0;
 	if ($row['paid_by_id'] !== '0') { // adjust for paid_by
 		$row['user_' . $row['paid_by_id'] . '_amount'] -= floatval($row['amount']);
 	}
 	$total_balance -= floatval($row[$user_amount]);
-	$trans_array[$index] = $row;
-	$index++;
+	$trans_array[] = $row;
 }
 
 // duplicate repeated transaction for the valid period
 $repeated_transactions = $curr_user->get_repeated_transactions(0);
-while ($row = $repeated_transactions->fetch_assoc()) {
+while ($repeated_transactions && $row = $repeated_transactions->fetch_assoc()) {
 	if ($row['paid_by_id'] !== '0') { // adjust for paid_by
 		$row['user_' . $row['paid_by_id'] . '_amount'] -= floatval($row['amount']);
 	}
@@ -74,7 +70,7 @@ $trans_index = 0;
 $deposit_index = 0;
 $trans_length = count($trans_array);
 $deposit_length = count($deposit_array);
-$deposits->data_seek(0);
+
 $date = date('Y-m');
 $date = date('Y-m-d', strtotime($date . '+ 1 month'));
 while ($deposit_index < $deposit_length || $trans_index < $trans_length) {
@@ -90,6 +86,7 @@ echo '</div>';
 unset($id_to_user['0']); // remove 'Bank' as a user (see top of this file)
 
 function print_deposit_table($deposits, &$index, &$balance, $endtime) {
+	global $curr_user;
 	if (count($deposits) === 0) {
 		return;
 	}
@@ -109,6 +106,7 @@ function print_deposit_table($deposits, &$index, &$balance, $endtime) {
 			echo '<td colspan="4">';
 			// edit and delete buttons
 			echo '<form class="form-inline" role="form" action="balance.php?submission=deposit_delete" method="post">';
+			echo '<input type="hidden" name="session_token" value="' . htmlspecialchars($curr_user->session_token) . '">';
 			echo '<div class="btn-group">
 					  <button type="button" class="btn btn-primary deposit-edit-button" value="' . htmlspecialchars($deposits[$index]['id']) . '">Edit</button>
 				  	  <button type="submit" class="btn btn-primary deposit-delete-button" name="deposit-id" value="' . htmlspecialchars($deposits[$index]['id']) . '">Delete</button>
@@ -132,7 +130,7 @@ function print_transaction_table($transactions, &$index, &$balance, $endtime) {
 		return;
 	}
 	global $id_to_user;
-	global $user_id;
+	global $curr_user;
 	global $user_amount;
 	static $transaction_fields = array(); // stores the user_x_amount keys so they can be used later
 	if (count($transaction_fields) === 0) {
@@ -161,8 +159,8 @@ function print_transaction_table($transactions, &$index, &$balance, $endtime) {
 				 '<td colspan="6">' .
 				 'Amount by Person:  ';
 
-			foreach ($transaction_fields as $user_amount => $id) {
-				echo '<div user-id="' . htmlspecialchars($id) . '">' . htmlspecialchars($id_to_user[$id]) . ': ' . htmlspecialchars(number_format($curr_trans[$user_amount], 2)) . '</div>';
+			foreach ($transaction_fields as $user_x_amount => $id) {
+				echo '<div user-id="' . htmlspecialchars($id) . '">' . htmlspecialchars($id_to_user[$id]) . ': ' . htmlspecialchars(number_format($curr_trans[$user_x_amount], 2)) . '</div>';
 			}
 			echo '<br>';
 			// edit and delete buttons
@@ -172,8 +170,9 @@ function print_transaction_table($transactions, &$index, &$balance, $endtime) {
 			} else {
 				echo '<input type="hidden" name="trans-type" trans-id="' . htmlspecialchars($curr_trans['id']) . '" value="r" trans-date="' . htmlspecialchars(date('Y-m-d', strtotime($curr_trans['start_date']))) . 
 					'" trans-end-date="' . htmlspecialchars(date('Y-m-d', strtotime($curr_trans['end_date']))) . '" trans-interval-num="' . htmlspecialchars($curr_trans['repeat_interval_num']) .
-					'" repeat-interval-unit="' . htmlspecialchars($curr_trans['repeat_interval_unit']) . '">';
+					'" trans-interval-unit="' . htmlspecialchars($curr_trans['repeat_interval_unit']) . '">';
 			}
+			echo '<input type="hidden" name="session_token" value="' . htmlspecialchars($curr_user->session_token) . '">';
 			echo '<div class="btn-group">';
 			
 			echo	  '<button type="button" class="btn btn-primary transaction-edit-button">Edit</button>

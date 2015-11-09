@@ -12,15 +12,18 @@
 
 		<script src="js/jquery-2.1.4.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
-		<script src="js/script.js"></script>
 		<style>
 		</style>
 	</head>
 	<body>
 		<?php
 			require_once 'navbar.php';
+
+			if (get_session_status() === 'register failed') {
+				echo '<div style="color:red">Email is already taken! Please use another email.</div>';
+			}
 		?>
-		<form role="form" action="index.php?submission=register-user" method="post" id="login-form">
+		<form role="form" action="register.php?submission=register_user" method="post" id="login-form">
 			<div class="form-group">
 				<label>First Name:</label>
 				<input type="text" class="form-control" name="register-first-name" required>
@@ -45,3 +48,6 @@
 		</form>
 	</body>
 </html>
+<?php
+	require_once 'closer.php';
+?>
