@@ -1,5 +1,8 @@
 <?php
 
+require_once '../lib/config.php';
+require_once '../lib/classes/user_main.php';
+
 if (session_id() == '')
 	session_start();
 

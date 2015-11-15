@@ -1,6 +1,4 @@
 <?php
-	require_once '../lib/config.php';
-	require_once '../lib/classes/user_main.php';
 	require_once 'init.php';
 ?> 
 <!DOCTYPE html>

@@ -21,8 +21,7 @@ while ($row = $transactions->fetch_assoc()) {
 	$row['type'] = 'transaction';
 	$row['repeated'] = 0;
 	$row['paid_by_amount'] = $row['amount']; // paid_by_amount is total amount paid
-	$amount = (($row['paid_by_id'] === 0) ? floatval($row['paid_by_amount']) : 0);
-	$row['amount'] = $amount;
+	$row['amount'] = (($row['paid_by_id'] === '0') ? floatval($row['paid_by_amount']) : 0);
 	$total_balance -= floatval($row['amount']);
 	$merged_array[$index] = $row;
 	$index++;
@@ -31,7 +30,10 @@ while ($row = $transactions->fetch_assoc()) {
 // duplicate repeated transaction for the valid period
 $repeated_transactions = $curr_user->get_repeated_transactions(1);
 while ($repeated_transactions && $row = $repeated_transactions->fetch_assoc()) {
-	$row['type'] = 'transaction';
+	$row['type'] = 'transaction (repeated)';
+	$row['repeated'] = 1;
+	$row['paid_by_amount'] = $row['amount'];
+	$row['amount'] = (($row['paid_by_id'] === '0') ? floatval($row['paid_by_amount']) : 0);
 	switch ($row['repeat_interval_unit']) {
 		case 'd':
 			$suffix = ' day';
@@ -49,9 +51,7 @@ while ($repeated_transactions && $row = $repeated_transactions->fetch_assoc()) {
 	$curr_date = $row['start_date'];
 	$curr_time = strtotime($curr_date);
 	while ($curr_time <= $end_time) {
-		$row['repeated'] = 1;
 		$row['action_time'] = $curr_date;
-		$row['paid_by_amount'] = $row['amount'];
 		
 		$total_balance -= floatval($row['amount']);
 		$merged_array[$index] = $row;
@@ -100,7 +100,12 @@ function print_table($actions, &$index, &$balance, $endtime) {
 					echo '<td>n/a</td>';
 				}
 			} else {
-				echo '    <td class="positive">' . htmlspecialchars($id_to_user[$curr_action['paid_by_id']]) . ': ' . htmlspecialchars(number_format($curr_action['paid_by_amount'], 2)) . '</td>';
+				if ($curr_action['paid_by_id'] === '0') {
+					echo '    <td class="' . ($curr_action['amount'] > 0 ? 'negative' : 'positive') . '">' . htmlspecialchars($id_to_user[$curr_action['paid_by_id']]) . '</td>';
+				} else {
+					echo '    <td class="positive">' . htmlspecialchars($id_to_user[$curr_action['paid_by_id']]) . ': ' . htmlspecialchars(number_format($curr_action['paid_by_amount'], 2)) . '</td>';
+				}
+				
 				foreach ($id_to_user as $id => $user) {
 					$user_x_amount = 'user_' . $id . '_amount';
 					if ($id !== 0) { // skip bank

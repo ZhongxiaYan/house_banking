@@ -1,6 +1,4 @@
 <?php
-	require_once '../lib/config.php';
-	require_once '../lib/classes/user_main.php';
 	require_once 'init.php';
 ?> 
 <!DOCTYPE html>
@@ -12,7 +10,18 @@
 
 		<script src="js/jquery-2.1.4.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
+		<script src="js/index.js"></script>
+		<script src="js/json.js"></script>
 		<style>
+
+			.editting-cell {
+				background-color: gray;
+				cursor: pointer;
+			}
+
+			.editting-cell:hover {
+				background-color: lightyellow;
+			}
 
 			.negative {
 				color: red;
@@ -20,6 +29,11 @@
 
 			.positive {
 				color: green;
+			}
+
+			.selected-cell {
+				background-color: yellow;
+				cursor: pointer;
 			}
 
 			.table thead tr th {
@@ -37,15 +51,36 @@
 			.transaction-single {
 				background-color: #ffccff;
 			}
+
 		</style>
 	</head>
 	<body>
 		<?php
 			require_once 'navbar.php';
 		?>
+		<div class="table-responsive">
+			<div class="form-group form-inline">
+				<label>Width:</label>
+				<input type="number" class="form-control" step="1" min="0" id="table-width">
+				<label>Height:</label>
+				<input type="number" class="form-control" step="1" min="0" id="table-height">
+			</div>
+			<table class="table table-bordered table-fixed" id="editable-table" session_token=<?php echo '"' . $user_session_token . '"' ?>>
+				<tbody>
+					<?php
+						require_once 'print_editable_table.php';
+					?>
+				</tbody>
+			</table>
+			<div class="btn-group">
+				<button type="button" class="btn btn-primary" id="restore">Restore</button>
+				<button type="button" class="btn btn-primary" id="interactive-resize">Interactive Crop</button>
+				<button type="button" class="btn btn-primary" id="save">Save</button>
+			</div>
+		</div>
 		<h1>Deposits and Transaction History:</h1>
 		<div class="table-responsive">
-			<table class="table table-bordered">
+			<table class="table table-bordered table-fixed">
 				<thead>
 			 		<tr>
 						<th>Balance</th>
@@ -69,7 +104,7 @@
 					?>
 				</tbody>
 			</table>
-		</div>  
+		</div>
 	</body>
 </html>
 <?php

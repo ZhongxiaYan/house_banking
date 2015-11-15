@@ -215,7 +215,7 @@ function make_transaction_form() {
 	}
 
 	// find selected payer and calculate how much he's supposed to pay
-	var selected_payer;
+	var selected_payer = null;
 	trans_form.find('#trans-paid-by').each(function() {
 		$(this).children().each(function(index) {
 			if (typeof selected_payer === 'undefined' && index === 0) {
@@ -227,9 +227,9 @@ function make_transaction_form() {
 			}
 		});
 	});
-	console.log(trans_info['trans-interval-unit']);
+	
 	// find selected unit
-	var selected_unit;
+	var selected_unit = null;
 	trans_form.find('#trans-interval-unit').each(function() {
 		$(this).children().each(function(index) {
 			if (typeof selected_unit === 'undefined' && index === 0) {
@@ -253,8 +253,12 @@ function make_transaction_form() {
 
 	// append form to the row entry, set up listeners
 	$(this).closest('td').append(trans_form);
-	selected_payer.attr('selected', 'selected');
-	selected_unit.attr('selected', 'selected');
+	if (selected_payer !== null) {
+		selected_payer.attr('selected', 'selected');
+	}
+	if (selected_unit !== null) {
+		selected_unit.attr('selected', 'selected');
+	}
 	trans_form.find('#trans-paid-by').change(choose_paid_user).change();
 
 	$(this).unbind().click(cancel_transaction_form);
