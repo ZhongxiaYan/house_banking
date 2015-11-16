@@ -73,11 +73,14 @@ $deposit_length = count($deposit_array);
 
 $date = date('Y-m');
 $date = date('Y-m-d', strtotime($date . '+ 1 month'));
+$entries_printed = 0;
+$max_entries = 50; // at max how many outer rows will be printed
 while ($deposit_index < $deposit_length || $trans_index < $trans_length) {
 	$date = date('Y-m-d', strtotime($date . '- 1 month'));
 	print_outer_row($total_balance, $date);
-	print_deposit_table($deposit_array, $deposit_index, $total_balance, $date);
-	print_transaction_table($trans_array, $trans_index, $total_balance, $date);
+	print_deposit_table($deposit_array, $deposit_index, $total_balance, $date, $entries_printed, $max_entries);
+	print_transaction_table($trans_array, $trans_index, $total_balance, $date, $entries_printed, $max_entries);
+	$entries_printed++;
 }
 echo '</tbody>';
 echo '</table>';
@@ -85,17 +88,17 @@ echo '</div>';
 
 unset($id_to_user['0']); // remove 'Bank' as a user (see top of this file)
 
-function print_deposit_table($deposits, &$index, &$balance, $endtime) {
+function print_deposit_table($deposits, &$index, &$balance, $endtime, $entries_printed, $max_entries) {
 	global $curr_user;
 	if (count($deposits) === 0) {
 		return;
 	}
-	if ($index < count($deposits) && $deposits[$index]['action_time'] >= $endtime) {
+	if ($index < count($deposits) && ($deposits[$index]['action_time'] >= $endtime || $entries_printed >= $max_entries)) {
 		echo '<tr class="hidden-row">';
 		echo '<td colspan="3"><table class="table table-bordered">';
 		echo '<thead><tr> <th>Deposit</th> <th>Amount</th> <th>Date</th> <th>Note</th> </tr></thead>';
 		echo '<tbody>';
-		while ($index < count($deposits) && $deposits[$index]['action_time'] >= $endtime) {
+		while ($index < count($deposits) && ($deposits[$index]['action_time'] >= $endtime || $entries_printed >= $max_entries)) {
 			echo '<tr class="deposit-expandable-row">';
 			echo '    <td type=deposit-name>' . htmlspecialchars($deposits[$index]['name']) . '</td>';
 			echo '    <td type=deposit-amount class="' . htmlspecialchars(($deposits[$index]['amount'] < 0) ? 'negative' : 'positive') . '">' . htmlspecialchars(number_format($deposits[$index]['amount'], 2)) . '</td>';
@@ -125,7 +128,7 @@ function print_deposit_table($deposits, &$index, &$balance, $endtime) {
 	}
 }
 
-function print_transaction_table($transactions, &$index, &$balance, $endtime) {
+function print_transaction_table($transactions, &$index, &$balance, $endtime, $entries_printed, $max_entries) {
 	if (count($transactions) === 0) {
 		return;
 	}
@@ -140,12 +143,12 @@ function print_transaction_table($transactions, &$index, &$balance, $endtime) {
 			}
 		}
 	}
-	if ($index < count($transactions) && $transactions[$index]['action_time'] >= $endtime) {
+	if ($index < count($transactions) && ($transactions[$index]['action_time'] >= $endtime || $entries_printed >= $max_entries)) {
 		echo '<tr class="hidden-row">
 			  <td colspan="3"><table class="table table-bordered">
 			  <thead><tr> <th>Transaction</th> <th>Your cost</th> <th>Total Cost</th> <th>Paid by</th> <th>Date</th> <th>Note</th> </tr></thead>
 			  <tbody>';
-		while ($index < count($transactions) && $transactions[$index]['action_time'] >= $endtime) {
+		while ($index < count($transactions) && ($transactions[$index]['action_time'] >= $endtime || $entries_printed >= $max_entries)) {
 			$curr_trans = $transactions[$index];
 			echo '<tr class="transaction-expandable-row">' .
 				 '    <td type=trans-name>' . htmlspecialchars($curr_trans['name']) . '</td>' .

@@ -1,7 +1,10 @@
 <?php
 
-$url = parse_url(getenv("CLEARDB_DATABASE_URL"));
-
+$env = getenv('CLEARDB_DATABASE_URL');
+if (!$env) {
+	$env = getenv('DATABASE_URL');
+}
+$url = parse_url($env);
 $config = array(
 	'db' => array(
 		'dbname' => substr($url['path'], 1),
@@ -18,7 +21,9 @@ $config = array(
 	'paths' => array(
 		'resources' => '/house_banking/resources',
 		'images' => '/house_banking/public_html/img',
-		'editable_table' => 'editable_table.txt'
+		'editable_table' => 'editable_table.ser',
+		'register_codes' => 'register_codes.ser',
+		'word_list' => '../lib/words.txt'
 	)
 );
 

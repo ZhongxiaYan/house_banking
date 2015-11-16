@@ -82,7 +82,6 @@ function done_resize() {
 	if (selected) { // crop the unwanted parts
 		resize(min_x, max_x, min_y, max_y);
 	}
-	
 	$('#editable-table').find('td').removeClass('editting-cell selected-cell').unbind();
 	$(this).unbind().click(start_resize).text('Interactive Crop');
 	$('#restore').text('Restore').unbind().click(restore_data);
@@ -96,6 +95,8 @@ function resize(min_x, max_x, min_y, max_y) {
 		$(this).children('td').slice(max_x + 1).remove();
 		$(this).children('td').slice(0, min_x).remove();
 	});
+	$('#table-width').val(max_x + 1).change();
+	$('#table-height').val(max_y + 1).change();
 	update_height_width();
 }
 

@@ -1,6 +1,5 @@
 <?php
 
-require_once '../lib/config.php';
 require_once 'init.php';
 
 if (file_exists($config['paths']['editable_table'])) {
