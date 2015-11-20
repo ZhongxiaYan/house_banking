@@ -4,7 +4,7 @@ require_once 'init.php';
 
 $cells_sql = $mysqli->query('SELECT * FROM ' . $config['db']['tables']['cellinfo'] . ' ORDER BY row_index');
 $cell_map = array();
-if ($cell = $cells_sql->fetch_assoc()) { // if any data at all
+if ($cells_sql && $cell = $cells_sql->fetch_assoc()) { // if any data at all
 	$curr_row = $cell['row_index'];
 	$curr_row_array = array($cell['column_index'] => $cell['val']);
 	while ($cell = $cells_sql->fetch_assoc()) {
