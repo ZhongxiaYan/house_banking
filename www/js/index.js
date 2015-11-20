@@ -21,24 +21,8 @@ $(document).ready(function() {
 		});
 	});
 	$('#table-height').change(function() { // desired height changed
+		var new_row = get_new_row(table);
 		var height = table.children('tbody').children('tr').length;
-
-		var new_row = null;
-		if (height > 0) { // clone existing row if one exists
-			var new_row = table.children('tbody').children('tr').eq(0).clone();
-			new_row.children('td').text('');
-		} else { // create row from scratch if previous height is 0
-			var width = $('#table-width').val();
-			if (isNaN(width)) { // backup in case someone screws with the textbox
-				var tr = table.children('tbody').children('tr').eq(0).children().length;
-			}
-			var new_row_str = '<tr>';
-			for (var i = 0; i < width; i++) {
-				new_row_str += '<td contenteditable></td>';
-			}
-			new_row_str += '</tr>';
-			new_row = $(new_row_str);
-		}
 		var targ_height = $(this).val();
 		table.children('tbody').each(function() { // adjust table height until matches the desired height
 			while (targ_height > height) { // need to add some rows
@@ -50,16 +34,75 @@ $(document).ready(function() {
 			}
 		});
 	});
+	$('#append-top').click(function() {
+		table.children('tbody').prepend(get_new_row(table));
+	});
+	$('#append-bottom').click(function() {
+		table.children('tbody').append(get_new_row(table));
+	});
+	$('#append-left').click(function() {
+		table.children('tbody').children('tr').each(function() {
+			$(this).prepend('<td></td>');
+		});
+	});
+	$('#append-right').click(function() {
+		table.children('tbody').children('tr').each(function() {
+			$(this).append('<td></td>');
+		});
+	});
 	$('#interactive-resize').click(start_resize);
 	$('#restore').click(restore_data);
 	$('#save').click(send_data);
-	window.setInterval(check_server_data, 5000);
+	var timer_id = window.setInterval(check_server_data, 5000);
+	$(window).blur(function() {
+        window.clearInterval(timer_id);
+        timer_id = 0;
+	});
+	$(window).focus(function() {
+    	window.clearInterval(timer_id);
+        timer_id = window.setInterval(check_server_data, 5000);
+	});
 });
+
+function get_new_row(table) {
+	var new_row = null;
+	var height = table.children('tbody').children('tr').length;
+	if (height > 0) { // clone existing row if one exists
+		var new_row = table.children('tbody').children('tr').eq(0).clone();
+		new_row.children('td').text('');
+	} else { // create row from scratch if previous height is 0
+		var width = $('#table-width').val();
+		if (isNaN(width)) { // backup in case someone screws with the textbox
+			var tr = table.children('tbody').children('tr').eq(0).children().length;
+		}
+		var new_row_str = '<tr>';
+		for (var i = 0; i < width; i++) {
+			new_row_str += '<td contenteditable></td>';
+		}
+		new_row_str += '</tr>';
+		new_row = $(new_row_str);
+	}
+	return new_row;
+}
 
 function start_resize() {
 	$(this).text('Done');
-	$('#restore').click(cancel_resize).text('Cancel');
-	$('#editable-table').find('td').addClass('editting-cell').click(resize_select);
+	$('#restore').unbind().click(cancel_resize).text('Cancel');
+	$('#editable-table').find('td').addClass('editting-cell').click(resize_select).mouseenter(function() {
+		var selected = $('.selected-cell');
+		if (selected.length == 1) {
+			var column = $(this).index();
+			var row = $(this).parent().index();
+			var selected_column = selected.index();
+			var selected_row = selected.parent().index();
+			$('#editable-table').find('td').removeClass('editting-cell-covered').end()
+								.find('tr').slice(Math.min(row, selected_row), Math.max(row, selected_row) + 1)
+								.each(function() {
+									$(this).children('td').slice(Math.min(column, selected_column), Math.max(column, selected_column) + 1)
+										   .addClass('editting-cell-covered');
+								});
+		}
+	});
 	$(this).unbind().click(done_resize);
 }
 
@@ -82,9 +125,7 @@ function done_resize() {
 	if (selected) { // crop the unwanted parts
 		resize(min_x, max_x, min_y, max_y);
 	}
-	$('#editable-table').find('td').removeClass('editting-cell selected-cell').unbind();
-	$(this).unbind().click(start_resize).text('Interactive Crop');
-	$('#restore').text('Restore').unbind().click(restore_data);
+	cancel_resize();
 }
 
 function resize(min_x, max_x, min_y, max_y) {
@@ -95,40 +136,38 @@ function resize(min_x, max_x, min_y, max_y) {
 		$(this).children('td').slice(max_x + 1).remove();
 		$(this).children('td').slice(0, min_x).remove();
 	});
-	$('#table-width').val(max_x + 1).change();
-	$('#table-height').val(max_y + 1).change();
-	update_height_width();
+	$('#table-width').val(max_x - min_x + 1).change();
+	$('#table-height').val(max_y - min_y + 1).change();
 }
 
 function cancel_resize() {
-	$('#editable-table').find('td').removeClass('editting-cell selected-cell').unbind();
-	$(this).unbind().click(restore).text('Restore');
+	$('#editable-table').find('td').removeClass('editting-cell selected-cell editting-cell-covered').unbind();
+	$('#restore').unbind().click(restore_data).text('Restore');
 	$('#interactive-resize').unbind().click(start_resize).text('Interactive Crop');
 }
 
 function resize_select() {
 	if ($('.selected-cell').length < 2) {
-		$(this).addClass('selected-cell').unbind().click(resize_deselect);
+		$(this).addClass('selected-cell').unbind('click').click(resize_deselect);
 	}
 }
 
 function resize_deselect() {
-	$(this).removeClass('selected-cell').unbind().click(resize_select);
+	$(this).removeClass('selected-cell editting-cell-covered').unbind('click').click(resize_select);
 }
 
 function update_height_width() {
-	$('#table-height').val($('#editable-table').children('tbody').children('tr').length);
-	$('#table-width').val($('#editable-table').children('tbody').children('tr').eq(0).children('td').length);
+	$('#table-height').val($('#editable-table').children('tbody').children('tr').length).change();
+	$('#table-width').val($('#editable-table').children('tbody').children('tr').eq(0).children('td').length).change();
 }
 
 function send_data() {
 	var send_data = {};
 	var curr_table_data = get_table_data();
-	send_data.after = curr_table_data;
-	send_data.before = JSON.parse(window.sessionStorage.table);
-	send_data.action = 'send';
-	send_data.session_token = $('#editable-table').attr('session_token');
-
+	send_data['after'] = curr_table_data;
+	send_data['before'] = JSON.parse(window.sessionStorage.table);
+	send_data['action'] = 'send';
+	send_data['session_token'] = $('#editable-table').attr('session_token');
 	var request = $.post("print_editable_table.php", send_data, function(return_data) {
 		var return_obj = JSON.parse(return_data);
 		if (return_obj['success'] === '1') {
@@ -162,7 +201,7 @@ function get_table_data() {
 	return cell_data;
 }
 
-function restore_data() {
+function restore_data(e) {
 	if (window.sessionStorage.server_table === '' && !confirm('Restore to original table?')) {
     	e.preventDefault();
         return;
@@ -240,12 +279,15 @@ function check_server_data() {
 }
 
 function compare_table_data(table1, table2) {
+	if (Object.keys(table1).length !== Object.keys(table2).length) {
+		return false;
+	}
 	for (var row in table1) {
-		if (!(row in table2)) {
+		var table1row;
+		var table2row;
+		if (!(row in table2) || Object.keys(table1row = table1[row]).length !== Object.keys(table2row = table2[row]).length) {
 			return false;
 		}
-		var table1row = table1[row];
-		var table2row = table2[row];
 		for (var column in table1row) {
 			if (!(column in table2row) || table2row[column] !== table1row[column]) {
 				return false;

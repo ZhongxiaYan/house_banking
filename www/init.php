@@ -32,7 +32,7 @@ if (array_key_exists('user_id', $_SESSION) && array_key_exists('user_session_tok
 			$user_info['verified'], $user_info['admin'],  $user_info['deleted'], $mysqli, $config['db']['tables']['deposits'], 
 			$config['db']['tables']['transactions_single'], $config['db']['tables']['transactions_repeated']);
 	}
-	$users_sql = $mysqli->query('SELECT * FROM ' . $config['db']['tables']['userinfo'] . ' WHERE verified=1 AND deleted=0');
+	$users_sql = $mysqli->query('SELECT * FROM ' . $config['db']['tables']['userinfo'] . ' WHERE verified=1 AND deleted=0;');
 	$id_to_user = array();
 	$users = array();
 	$users_sql->data_seek(0);
@@ -71,14 +71,9 @@ if (array_key_exists('submission', $_GET)) { // submitted some form, redirect to
 	set_clear();
 	if ($_SESSION['submission'] === 'register_user') {
 		// checks that register code is correct
-		if (file_exists($config['paths']['register_codes'])) {
-			$codes_ser = file_get_contents($config['paths']['register_codes']);
-			$codes = unserialize($codes_ser);
-		}
-		if (!is_array($codes)) {
-			$codes = array();
-		}
-		if (($key = array_search($_SESSION['register-code'], $codes, true)) === false) {
+		$query = 'SELECT * FROM ' . $config['db']['tables']['register_codes'] . ' WHERE code="' . $_SESSION['register-code'] . '";';
+		$result = $mysqli->query($query);
+		if (!$result || $result->num_rows === 0) {			
 			set_session_status('register code not found');
 		} else {
 			$result = register_user($_SESSION['register-first-name'], $_SESSION['register-last-name'], $_SESSION['register-email'], $_SESSION['register-password'], $mysqli, $config['db']['tables']['userinfo'], $config['db']['tables']['transactions_single'], $config['db']['tables']['transactions_repeated']);
@@ -86,17 +81,13 @@ if (array_key_exists('submission', $_GET)) { // submitted some form, redirect to
 				set_session_status('just registered');
 				set_redirect('login.php');
 
-				// delete the register code that was used and resave file
-				unset($codes[$key]);
-				$codes_ser = serialize($codes);
-				file_put_contents($config['paths']['register_codes'], $codes_ser);
+				// delete the register code that was used
+				$mysqli->query('DELETE FROM ' . $config['db']['tables']['register_codes'] . ' WHERE code="' . $_SESSION['register-code'] . '";');
 			} else {
 				set_session_status('register failed');
 				set_redirect('register.php');
 			}
 		}
-			
-		
 	} else if ($_SESSION['submission'] === 'login') {
 		$userinfo = login($_SESSION['login-email'], $_SESSION['login-password'], $mysqli, $config['db']['tables']['userinfo']);
 		if ($userinfo) { // logged in
@@ -171,7 +162,7 @@ if (array_key_exists('submission', $_GET)) { // submitted some form, redirect to
 					set_redirect('admin.php');
 					break;
 				case 'register_code':
-					change_register_code();
+					change_register_code($mysqli);
 					break;
 			}
 		}
@@ -353,30 +344,33 @@ function get_user_amounts(&$user_amounts) {
 	return $paid_by_id;
 }
 
-function change_register_code() {
+function change_register_code($db) {
 	global $config;
-	if (file_exists($config['paths']['register_codes'])) {
-		$codes_ser = file_get_contents($config['paths']['register_codes']);
-		$codes = unserialize($codes_ser);
-	}
-	if (!is_array($codes)) {
-		$codes = array();
-	}
 	if (array_key_exists('delete', $_SESSION)) {
 		foreach ($_SESSION as $key => $value) {
 			if (preg_match('/^select(\w+)$/', $key, $match)) {
-				unset($codes[$match[1]]);
+				$query = 'DELETE FROM ' . $config['db']['tables']['register_codes'] . ' WHERE code=?;';
+				$stmt = $db->prepare($query);
+				if (!$stmt->bind_param('s', $match[1])) {
+					echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
+				}
+				if (!$stmt->execute()) {
+					echo 'Execution failed: (' . $stmt->errno . ') ' . $stmt->error;
+				}
 			}
 		}
 		set_session_status('admin deleted register codes');
 	} else if (array_key_exists('generate', $_SESSION)) {
-		while (array_key_exists($rand = rand(0, 998), $codes));
+		$new_code = '';
 		$lines = file($config['paths']['word_list']);
-		$codes[$rand] = preg_replace('/\s+/S', "", $lines[$rand]);
+		for ($i = 0; $i < 5; $i++) {
+			$rand = rand(0, 998);
+			$new_code .= preg_replace('/\s+/S', "", $lines[$rand]);
+		}
+		$query = 'INSERT INTO ' . $config['db']['tables']['register_codes'] . ' (code) VALUES ("' . $new_code . '");';
+		$db->query($query);
 		set_session_status('admin generated register codes');
 	}
-	$codes_ser = serialize($codes);
-	file_put_contents($config['paths']['register_codes'], $codes_ser);
 }
 
 ?>

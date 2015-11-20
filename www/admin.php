@@ -161,18 +161,13 @@
 						</tr>
 						<?php
 
-						if (file_exists($config['paths']['register_codes'])) {
-							$codes_ser = file_get_contents($config['paths']['register_codes']);
-							$codes = unserialize($codes_ser);
-						} 
-						if (!is_array($codes)) {
-							$codes = array();
-						}
-						foreach ($codes as $key => $value) {
+						$query = 'SELECT * FROM ' . $config['db']['tables']['register_codes'] . ';';
+						$result = $mysqli->query($query);
+						while ($row = $result->fetch_assoc()) {
 							echo '<tr>' .
-								'<td>' . $value . '</td>' .
-								'<div class="checkbox">' . 
-								'<td>' . '<input type="checkbox" name="select' . $key . '" value="on">' . '</td>' .
+								'<td>' . $row['code'] . '</td>' .
+								'<div class="checkbox">' .
+								'<td>' . '<input type="checkbox" name="select' . $row['code'] . '" value="on">' . '</td>' .
 								'</div>' .
 								'</tr>';
 						}

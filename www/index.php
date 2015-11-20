@@ -26,6 +26,10 @@
 				background-color: lightyellow;
 			}
 
+			.editting-cell-covered {
+				background-color: lightyellow;
+			}
+
 			.negative {
 				color: red;
 			}
@@ -68,6 +72,13 @@
 					<input type="number" class="form-control" step="1" min="0" id="table-width">
 					<label>Height:</label>
 					<input type="number" class="form-control" step="1" min="0" id="table-height">
+					<label>Append:</label>
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" id="append-top">Top</button>
+						<button type="button" class="btn btn-primary" id="append-bottom">Bottom</button>
+						<button type="button" class="btn btn-primary" id="append-left">Left</button>
+						<button type="button" class="btn btn-primary" id="append-right">Right</button>
+					</div>
 				</div>
 				<table class="table table-bordered table-fixed" id="editable-table" session_token=<?php echo '"' . $user_session_token . '"' ?>>
 					<tbody>

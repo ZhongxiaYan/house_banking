@@ -15,14 +15,14 @@ $config = array(
 			'userinfo' => 'userinfo',
 			'deposits' => 'userpaymenthistory',
 			'transactions_single' => 'transactions',
-			'transactions_repeated' => 'repeatedtransactions'
+			'transactions_repeated' => 'repeatedtransactions',
+			'cellinfo' => 'cellinfo',
+			'register_codes' => 'registercodes'
 		)
 	),
 	'paths' => array(
 		'resources' => '/house_banking/resources',
 		'images' => '/house_banking/public_html/img',
-		'editable_table' => 'editable_table.ser',
-		'register_codes' => 'register_codes.ser',
 		'word_list' => '../lib/words.txt'
 	)
 );

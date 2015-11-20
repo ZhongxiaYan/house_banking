@@ -3,7 +3,7 @@
 $user_amount = 'user_' . $curr_user->id . '_amount';
 $id_to_user['0'] = 'Bank'; // adds bank as a user for printing tables
 
-$deposits = $curr_user->get_deposits(0);
+$deposits = $curr_user->get_deposits($curr_user->is_admin);
 $deposit_array = array();
 $total_balance = 0.0; // sum up the cost for every transaction then subtract as we go
 while ($row = $deposits->fetch_assoc()) {
@@ -11,7 +11,7 @@ while ($row = $deposits->fetch_assoc()) {
 	$total_balance += floatval($row['amount']);
 }
 
-$transactions = $curr_user->get_single_transactions(0);
+$transactions = $curr_user->get_single_transactions($curr_user->is_admin);
 $trans_array = array();
 while ($row = $transactions->fetch_assoc()) {
 	$row['repeated'] = 0;
@@ -23,7 +23,7 @@ while ($row = $transactions->fetch_assoc()) {
 }
 
 // duplicate repeated transaction for the valid period
-$repeated_transactions = $curr_user->get_repeated_transactions(0);
+$repeated_transactions = $curr_user->get_repeated_transactions($curr_user->is_admin);
 while ($repeated_transactions && $row = $repeated_transactions->fetch_assoc()) {
 	if ($row['paid_by_id'] !== '0') { // adjust for paid_by
 		$row['user_' . $row['paid_by_id'] . '_amount'] -= floatval($row['amount']);
@@ -61,7 +61,7 @@ echo '<div class="table-responsive">';
 echo '<table class="table table-bordered">';
 echo '<thead>
 		 <tr>
-			 <th>Balance</th>
+			 <th>Personal Balance</th>
 			 <th>Time</th>
 		 </tr>
 		 </thead>

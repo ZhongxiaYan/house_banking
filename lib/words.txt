@@ -939,7 +939,7 @@ evening
 condition
 feed
 tool
-]total
+total
 basic
 smell
 valley
