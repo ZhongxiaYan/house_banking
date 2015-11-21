@@ -150,7 +150,7 @@ function make_deposit_form() {
 	});
 
 	// changes form submission information
-	deposit_form.attr('action', 'balance.php?submission=deposit_edit');
+	deposit_form.attr('action', deposit_form.attr('action').replace('submit', 'edit'));
 	deposit_form.append('<input type="hidden" name="deposit-id" value="' + $(this).val() + '">');
 	
 	// append form to the row entry, set up listeners
@@ -177,7 +177,7 @@ function make_transaction_form() {
 
 	// hidden input field containing information
 	var repeat_info_carrier = $(this).parent().siblings('input');
-	trans_form.attr('action', 'balance.php?submission=transaction_edit');
+	trans_form.attr('action', trans_form.attr('action').replace('submit', 'edit'));
 
 	// stores information in the table into a map
 	var trans_info = new Object;
@@ -260,6 +260,7 @@ function make_transaction_form() {
 		selected_unit.attr('selected', 'selected');
 	}
 	trans_form.find('#trans-paid-by').change(choose_paid_user).change();
+    trans_form.find('#trans-total-amount').blur(split_total_amount);
 
 	$(this).unbind().click(cancel_transaction_form);
 	$(this).text('Cancel');

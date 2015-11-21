@@ -58,7 +58,7 @@
 		<div id="main">
 			<h1>Create New:</h1>
 			<h4>Deposit:</h4>
-			<form class="form-inline" role="form" action="balance.php?submission=deposit_submit" method="post" id="deposit-form">
+			<form class="form-inline" role="form" action=<?= 'balance.php?submission=deposit_submit&user=' . $view_user->id ?> method="post" id="deposit-form">
 				<div class="form-group">
 					<label>Name:</label>
 					<input type="text" class="form-control" name="deposit-name">
@@ -69,21 +69,17 @@
 				</div>
 				<div class="form-group">
 					<label>Date:</label>
-					<?php
-
-					echo '<input type="date" class="form-control" name="deposit-date" max="' . date('Y-m-d') . '" value="' . date('Y-m-d') . '" required>';
-					
-					?>
+					<input type="date" class="form-control" name="deposit-date" max=<?= date('Y-m-d') ?> value=<?= date('Y-m-d') ?> required>
 				</div>
 				<div class="form-group">
 					<label>Note:</label>
 					<textarea class="form-control" rows="2" name="deposit-note"></textarea>
 				</div>
-				<input type="hidden" name="session_token" value=<?php echo '"' . htmlspecialchars($curr_user->session_token) . '"' ?>>
+				<input type="hidden" name="session_token" value=<?= htmlspecialchars($curr_user->session_token) ?>>
 				<button type="submit" class="btn btn-default">Submit</button>
 			</form>
 			<h4>Transaction:</h4>
-			<form class="form-inline" role="form" action="balance.php?submission=transaction_submit" method="post" id="trans-form">
+			<form class="form-inline" role="form" action=<?= 'balance.php?submission=transaction_submit&user=' . $view_user->id ?> method="post" id="trans-form">
 				<div class="form-group">
 					<label>Name:</label>
 					<input type="text" class="form-control" name="trans-name" required>
@@ -92,13 +88,10 @@
 					<label>Paid by:</label>
 					<select class="form-control" name="trans-paid-by" id="trans-paid-by">
 						<option value="0">Bank</option>
-						<?php
-
-						foreach ($id_to_user as $id => $name) {
-						    echo '<option value="' . htmlspecialchars($id) . '">' . htmlspecialchars($name) . '</option>';
-						}
-
-						?>
+						<?php foreach ($users as $id => $user): ?>
+						<option value=<?= htmlspecialchars($id) ?>><?= htmlspecialchars($user['name']) ?></option>
+						
+						<?php endforeach; ?>
 					</select>
 				</div>
 				<div class="form-group" required>
@@ -111,19 +104,11 @@
 				</div>
 				<div class="form-group start-date" required>
 					<label>Date:</label>
-					<?php
-
-					echo '<input type="date" class="form-control" name="trans-date" max="' . date('Y-m-d') . '" value="' . date('Y-m-d') . '">';
-					
-					?>
+					<input type="date" class="form-control" name="trans-date" max=<?= date('Y-m-d') ?> value=<?= date('Y-m-d') ?>>
 				</div>
 				<div class="form-group trans-repeat-info" style="display:none">
 					<label>Stop Date:</label>
-					<?php
-
-					echo '<input type="date" class="form-control" name="trans-end-date" value="' . date('Y-m-d') . '">';
-					
-					?>
+					<input type="date" class="form-control" name="trans-end-date" value=<?= date('Y-m-d') ?>>
 					<label>Interval:</label>
 					<input type="number" class="form-control" step="1" min="1" name="trans-interval-num" id="trans-interval-num" value="1">
 					<select class="form-control" name="trans-interval-unit" id="trans-interval-unit">
@@ -137,19 +122,16 @@
 					<textarea class="form-control" rows="2" name="trans-note"></textarea>
 				</div>
 				<h6>Individual Costs:</h6>
-				<?php
+					<?php foreach ($users as $id => $user): ?>
 
-				foreach ($id_to_user as $id => $name) {
-					echo '<div class="form-group">';
-					echo '<label>' . htmlspecialchars($name) . ':</label>';
-					echo '<input type="number" class="form-control user-amount" step="0.01" name="user_' . htmlspecialchars($id) . '_amount">';
-					echo '</div>';
-				}
+					<div class="form-group">
+						<label><?= htmlspecialchars($user['name']) ?>:</label>
+						<input type="number" class="form-control user-amount" step="0.01" name=<?= 'user_' . htmlspecialchars($id) . '_amount' ?>>
+					</div>
 
-				?>
-				
+					<?php endforeach; ?>				
 				<br><br>
-				<input type="hidden" name="session_token" value=<?php echo '"' . htmlspecialchars($curr_user->session_token) . '"' ?>>
+				<input type="hidden" name="session_token" value=<?= htmlspecialchars($curr_user->session_token) ?>>
 				<button type="submit" class="btn btn-default">Submit</button>
 			</form>
 

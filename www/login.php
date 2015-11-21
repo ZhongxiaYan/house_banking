@@ -24,20 +24,34 @@
 			<?php
 				// display message to the user depending on how they got here
 				$status = get_session_status();
-				if ($status === 'wrong login') {
-					echo '<div style="color:red">Incorrect Email or Password! Please try again.</div>';
-				} else if ($status === 'deleted') {
-					echo '<div style="color:red">Account deleted! Please contact an admin.</div>';
-				} else if ($status === 'unverified') {
-					echo '<div style="color:red">Account is not verified by admin yet.</div>';
-				} else if ($status === 'not logged in') {
-					echo '<div style="color:red">Please log in before visiting any other page.</div>';
-				} else if ($status === 'not admin') {
-					echo '<div style="color:red">Page requires administrator privileges. Please log in as admin.</div>';
-				} else if ($status === 'just registered') {
-					echo '<div style="color:green">Successfully registered. Please log in.</div>';
-				}
-			?>
+				switch ($status):
+					case '0': ?>
+
+					<?php break;
+					case 'wrong login': ?>
+					<div style="color:red">Incorrect Email or Password! Please try again.</div>
+
+					<?php break;
+					case 'deleted': ?>
+					<div style="color:red">Account deleted! Please contact an admin.</div>
+					
+					<?php break;
+					case 'unverified': ?>
+					<div style="color:red">Account is not verified by admin yet.</div>
+
+					<?php break;
+					case 'not logged in': ?>
+					<div style="color:red">Please log in before visiting any other page.</div>
+
+					<?php break;
+					case 'not admin': ?>
+					<div style="color:red">Page requires administrator privileges. Please log in as admin.</div>
+
+					<?php break;
+					case 'just registered': ?>
+					<div style="color:green">Successfully registered. Please log in.</div>
+
+				<?php endswitch; ?>
 			<form role="form" action="login.php?submission=login" method="post" id="login-form">
 				<div class="form-group">
 					<label>Email:</label>

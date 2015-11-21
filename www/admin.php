@@ -17,15 +17,16 @@
 	<body>
 		<?php
 			require_once 'navbar.php';
-			if (get_session_status() === 'admin changed user') {
-				echo '<div style="color:green">Successfully changed user information.</div>';
-			}
-			$users_sql = $mysqli->query('SELECT * FROM ' . $config['db']['tables']['userinfo']);
-			$id_to_user = array();
-			$users = array();
-			while ($user = $users_sql->fetch_assoc()) {
-				$users[$user['id']] = $user;
-			    $id_to_user[$user['id']] = $user['first_name'] . ' ' . substr($user['last_name'], 0, 1);
+			if (get_session_status() === 'admin changed user'): ?>
+				<div style="color:green">Successfully changed user information.</div>
+			<?php endif;
+
+			// rebuild user list for admin.php to include unverified and deleted users
+			$full_users_sql = $mysqli->query('SELECT * FROM ' . $config['db']['tables']['userinfo'] . ';');
+			$full_users = array();
+			while ($user = $full_users_sql->fetch_assoc()) {
+				$user['name'] = $user['first_name'] . ' ' . substr($user['last_name'], 0, 1);
+				$full_users[$user['id']] = $user;
 			}
 		?>
 			
@@ -46,23 +47,25 @@
 								<td><input type="checkbox" class="all" name="all" value="on"></td>
 							</div>
 						</tr>
-						<?php
-						
-						foreach ($users as $id => $user) {
-							if (!$user['verified']) {
-								echo '<tr>' .
-									'<td>' . $id_to_user[$id] . '</td>' .
-									'<div class="checkbox">' . 
-									'<td>' . '<input type="checkbox" name="select' . $id . '" value="on">' . '</td>' .
-									'</div>' .
-									'</tr>';
-							}
-						}
 
-						?>	
+						<?php foreach ($full_users as $id => $user): ?>
+						<?php if (!$user['verified']): ?>
+						
+						<tr>
+							<td><?= $user['name'] ?></td>
+							<div class="checkbox">
+								<td>
+									<input type="checkbox" name=<?= 'select' . $id ?> value="on">
+								</td>
+							</div>
+						</tr>
+
+						<?php endif; ?>
+						<?php endforeach; ?>
+
 					</tbody>
 				</table>
-			<input type="hidden" name="session_token" value=<?php echo '"' . htmlspecialchars($curr_user->session_token) . '"' ?>>
+			<input type="hidden" name="session_token" value=<?= htmlspecialchars($curr_user->session_token) ?>>
 			<button type="submit" class="btn btn-default">Submit</button>
 			</div>
 		</form>
@@ -84,23 +87,25 @@
 								<td><input type="checkbox" class="all" name="all" value="on"></td>
 							</div>
 						</tr>
-						<?php
 
-						foreach ($users as $id => $user) {
-							if (!$user['admin']) {
-								echo '<tr>' .
-									'<td>' . $id_to_user[$id] . '</td>' .
-									'<div class="checkbox">' . 
-									'<td>' . '<input type="checkbox" name="select' . $id . '" value="on">' . '</td>' .
-									'</div>' .
-									'</tr>';
-							}
-						}
+						<?php foreach ($full_users as $id => $user): ?>
+						<?php if (!$user['admin']): ?>
+						
+						<tr>
+							<td><?= $user['name'] ?></td>
+							<div class="checkbox">
+								<td>
+									<input type="checkbox" name=<?= 'select' . $id ?> value="on">
+								</td>
+							</div>
+						</tr>
+						
+						<?php endif; ?>
+						<?php endforeach; ?>
 
-						?>	
 					</tbody>
 				</table>
-			<input type="hidden" name="session_token" value=<?php echo '"' . htmlspecialchars($curr_user->session_token) . '"' ?>>
+			<input type="hidden" name="session_token" value=<?= htmlspecialchars($curr_user->session_token) ?>>
 			<button type="submit" class="btn btn-default">Submit</button>
 			</div>
 		</form>
@@ -122,23 +127,24 @@
 								<td><input type="checkbox" class="all" name="all" value="on"></td>
 							</div>
 						</tr>
-						<?php
 
-						foreach ($users as $id => $user) {
-							if (!$user['deleted']) {
-								echo '<tr>' .
-									'<td>' . $id_to_user[$id] . '</td>' .
-									'<div class="checkbox">' . 
-									'<td>' . '<input type="checkbox" name="select' . $id . '" value="on">' . '</td>' .
-									'</div>' .
-									'</tr>';
-							}
-						}
-
-						?>
+						<?php foreach ($full_users as $id => $user): ?>
+						<?php if (!$user['deleted']): ?>
+						
+						<tr>
+							<td><?= $user['name'] ?></td>
+							<div class="checkbox">
+								<td>
+									<input type="checkbox" name=<?= 'select' . $id ?> value="on">
+								</td>
+							</div>
+						</tr>
+						
+						<?php endif; ?>
+						<?php endforeach; ?>
 					</tbody>
 				</table>
-				<input type="hidden" name="session_token" value=<?php echo '"' . htmlspecialchars($curr_user->session_token) . '"' ?>>
+				<input type="hidden" name="session_token" value=<?= htmlspecialchars($curr_user->session_token) ?>>
 				<button type="submit" class="btn btn-default">Submit</button>
 			</div>
 		</form>
@@ -159,23 +165,26 @@
 								<td><input type="checkbox" class="all" name="all" value="on"></td>
 							</div>
 						</tr>
+
 						<?php
 
 						$query = 'SELECT * FROM ' . $config['db']['tables']['register_codes'] . ';';
 						$result = $mysqli->query($query);
-						while ($row = $result->fetch_assoc()) {
-							echo '<tr>' .
-								'<td>' . $row['code'] . '</td>' .
-								'<div class="checkbox">' .
-								'<td>' . '<input type="checkbox" name="select' . $row['code'] . '" value="on">' . '</td>' .
-								'</div>' .
-								'</tr>';
-						}
-
-						?>	
+						while ($row = $result->fetch_assoc()): ?>
+						
+						<tr>
+							<td><?= $row['code'] ?></td>
+							<div class="checkbox">
+								<td>
+									<input type="checkbox" name=<?= 'select' . $row['code'] ?> value="on">
+								</td>
+							</div>
+						</tr>
+						
+						<?php endwhile; ?>
 					</tbody>
 				</table>
-				<input type="hidden" name="session_token" value=<?php echo '"' . htmlspecialchars($curr_user->session_token) . '"' ?>>
+				<input type="hidden" name="session_token" value=<?= htmlspecialchars($curr_user->session_token) ?>>
 				<button type="submit" class="btn btn-default" name="delete">Delete</button>
 				<button type="submit" class="btn btn-default" name="generate">Generate</button>
 			</div>

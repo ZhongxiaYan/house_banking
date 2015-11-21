@@ -80,7 +80,7 @@
 						<button type="button" class="btn btn-primary" id="append-right">Right</button>
 					</div>
 				</div>
-				<table class="table table-bordered table-fixed" id="editable-table" session_token=<?php echo '"' . $user_session_token . '"' ?>>
+				<table class="table table-bordered table-fixed" id="editable-table" session_token=<?= $user_session_token ?>>
 					<tbody>
 						<?php
 							require_once 'print_editable_table.php';
@@ -105,11 +105,13 @@
 							<th>Amount</th>
 							<th>Paid by</th>
 							<?php
-								ksort($id_to_user);
-								foreach ($id_to_user as $id => $user) {
-									echo '<th>' . $user . '</th>';
-								}
-							?>
+							
+							ksort($users);
+							foreach ($users as $id => $user): ?>
+							
+							<th><?= $user['name'] ?></th>
+							
+							<?php endforeach; ?>
 							<th>Note</th>
 						</tr>
 					</thead>

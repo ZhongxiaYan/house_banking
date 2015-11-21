@@ -22,13 +22,14 @@
 			require_once 'navbar.php';
 		?>
 		<div id="main">
-			<?php
-				if (get_session_status() === 'register failed') {
-					echo '<div style="color:red">Email is already taken! Please use another email.</div>';
-				} else if (get_session_status() === 'register code not found') {
-					echo '<div style="color:red">Register code is incorrect! Please ask admin.</div>';
-				}
-			?>
+			<?php if (get_session_status() === 'register failed'): ?>
+			<div style="color:red">Email is already taken! Please use another email.</div>
+
+			<?php elseif (get_session_status() === 'register code not found'): ?>
+			<div style="color:red">Register code is incorrect! Please ask admin.</div>
+
+			<?php endif; ?>
+			
 			<form role="form" action="register.php?submission=register_user" method="post" id="register-form">
 				<div class="form-group">
 					<label>First Name:</label>

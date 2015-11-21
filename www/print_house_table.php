@@ -1,7 +1,7 @@
 <?php
 
 $user_amount = 'user_' . $curr_user->id . '_amount';
-$id_to_user['0'] = 'Bank'; // adds bank as a user for printing tables
+$users['0']['name'] = 'Bank'; // adds bank as a user for printing tables
 
 $merged_array = array();
 $index = 0;
@@ -62,7 +62,7 @@ while ($repeated_transactions && $row = $repeated_transactions->fetch_assoc()) {
 	}
 }
 usort($merged_array, 'date_cmp'); // sort all of the transactions after repeated trans are added
-ksort($id_to_user);
+ksort($users);
 
 $index = 0;
 $length = count($merged_array);
@@ -74,11 +74,11 @@ while ($index < $length) {
 	print_table($merged_array, $index, $total_balance, $date);
 }
 
-unset($id_to_user['0']); // remove 'Bank' as a user (see top of this file)
+unset($users['0']); // remove 'Bank' as a user (see top of this file)
 
 function print_table($actions, &$index, &$balance, $endtime) {
 	global $curr_user;
-	global $id_to_user;
+	global $users;
 	if (count($actions) === 0) {
 		return;
 	}
@@ -95,18 +95,18 @@ function print_table($actions, &$index, &$balance, $endtime) {
 			echo '    <td class="' . htmlspecialchars((($is_deposit ? $curr_action['amount'] : -$curr_action['amount']) < 0) ? 'negative' : 'positive') . '">' . htmlspecialchars(number_format($curr_action['amount'], 2)) . '</td>';
 			
 			if ($is_deposit) {
-				echo '<td>' . htmlspecialchars($id_to_user[$curr_action['paid_by_id']]) . '</td>';
-				for ($i = 1; $i < count($id_to_user); $i++) {
+				echo '<td>' . htmlspecialchars($users[$curr_action['paid_by_id']]['name']) . '</td>';
+				for ($i = 1; $i < count($users); $i++) {
 					echo '<td>n/a</td>';
 				}
 			} else {
 				if ($curr_action['paid_by_id'] === '0') {
-					echo '    <td class="' . ($curr_action['amount'] > 0 ? 'negative' : 'positive') . '">' . htmlspecialchars($id_to_user[$curr_action['paid_by_id']]) . '</td>';
+					echo '    <td class="' . ($curr_action['amount'] > 0 ? 'negative' : 'positive') . '">' . htmlspecialchars($users[$curr_action['paid_by_id']]['name']) . '</td>';
 				} else {
-					echo '    <td class="positive">' . htmlspecialchars($id_to_user[$curr_action['paid_by_id']]) . ': ' . htmlspecialchars(number_format($curr_action['paid_by_amount'], 2)) . '</td>';
+					echo '    <td class="positive">' . htmlspecialchars($users[$curr_action['paid_by_id']]['name']) . ': ' . htmlspecialchars(number_format($curr_action['paid_by_amount'], 2)) . '</td>';
 				}
 				
-				foreach ($id_to_user as $id => $user) {
+				foreach ($users as $id => $user) {
 					$user_x_amount = 'user_' . $id . '_amount';
 					if ($id !== 0) { // skip bank
 						echo '<td class="' . htmlspecialchars(($curr_action[$user_x_amount] > 0) ? 'negative' : 'positive') . '">' . htmlspecialchars(number_format($curr_action[$user_x_amount], 2)) . '</td>';

@@ -36,12 +36,12 @@ class UserMain {
 		return $this->transactions_s = $this->db->query($query);
 	}
 
-	public function make_single_transaction($name, $amount, $paid_by_id, $users_amounts, $action_time, $note) {
-		$query_head = 'INSERT INTO ' . $this->trans_table . ' (name, amount, paid_by_id, note, action_time, made_by';
+	public function make_single_transaction($name, $amount, $paid_by_id, $users_amounts, $action_time, $note, $maker_id) {
+		$query_head = sprintf('INSERT INTO %s (name, amount, paid_by_id, note, action_time, changed_by_id', $this->trans_table);
 		$query_tail = ') VALUES (?, ?, ?, ?, ?, ?';
 		$user_amounts_array = array();
 		$user_amounts_ref = array();
-		$parameter_str = 'sdisss';
+		$parameter_str = 'sdissi';
 		$count = 0;
 		foreach ($users_amounts as $user => $user_amount) {
 			$query_head = $query_head . ', ' . $user;
@@ -53,7 +53,7 @@ class UserMain {
 		}
 		$query = $query_head . $query_tail . ');';
 		$stmt = $this->db->prepare($query);
-		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$action_time, &$this->name), $user_amounts_ref);
+		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$action_time, &$maker_id), $user_amounts_ref);
 		if (!call_user_func_array(array($stmt, 'bind_param'), $args)) {
 			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
 		}
@@ -62,12 +62,12 @@ class UserMain {
 		}
 	}
 
-	public function edit_single_transaction($trans_id, $name, $amount, $paid_by_id, $users_amounts, $action_time, $note) {
-		$query_head = 'UPDATE ' . $this->trans_table . ' SET name=?, amount=?, paid_by_id=?, note=?, action_time=?, made_by=?';
+	public function edit_single_transaction($trans_id, $name, $amount, $paid_by_id, $users_amounts, $action_time, $note, $editter_id) {
+		$query_head = sprintf('UPDATE %s SET name=?, amount=?, paid_by_id=?, note=?, action_time=?, changed_by_id=?', $this->trans_table);
 		$query_tail = ' WHERE id=?;';
 		$user_amounts_array = array();
 		$user_amounts_ref = array();
-		$parameter_str = 'sdisss';
+		$parameter_str = 'sdissi';
 		$count = 0;
 		foreach ($users_amounts as $user => $user_amount) {
 			$query_head .= ', ' . $user . '=?';
@@ -79,7 +79,7 @@ class UserMain {
 		$parameter_str .= 'i';
 		$query = $query_head . $query_tail;
 		$stmt = $this->db->prepare($query);
-		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$action_time, &$this->name), $user_amounts_ref, array(&$trans_id));
+		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$action_time, &$editter_id), $user_amounts_ref, array(&$trans_id));
 		if (!call_user_func_array(array($stmt, 'bind_param'), $args)) {
 			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
 		}
@@ -105,12 +105,12 @@ class UserMain {
 		return $this->transactions_r = $this->db->query($query);
 	}
 
-	public function make_repeated_transaction($name, $amount, $paid_by_id, $users_amounts, $start_date, $end_date, $repeat_interval_num, $repeat_interval_unit, $note) {
-		$query_head = 'INSERT INTO ' . $this->trans_table_r . ' (name, amount, paid_by_id, note, start_date, end_date, repeat_interval_unit, repeat_interval_num, made_by';
+	public function make_repeated_transaction($name, $amount, $paid_by_id, $users_amounts, $start_date, $end_date, $repeat_interval_num, $repeat_interval_unit, $note, $maker_id) {
+		$query_head = sprintf('INSERT INTO %s (name, amount, paid_by_id, note, start_date, end_date, repeat_interval_unit, repeat_interval_num, changed_by_id', $this->trans_table_r);
 		$query_tail = ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?';
 		$user_amounts_array = array();
 		$user_amounts_ref = array();
-		$parameter_str = 'sdissssis';
+		$parameter_str = 'sdissssii';
 		$count = 0;
 		foreach ($users_amounts as $user => $user_amount) {
 			$query_head = $query_head . ', ' . $user;
@@ -122,7 +122,7 @@ class UserMain {
 		}
 		$query = $query_head . $query_tail . ');';
 		$stmt = $this->db->prepare($query);
-		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$start_date, &$end_date, &$repeat_interval_unit, &$repeat_interval_num, &$this->name), $user_amounts_ref);
+		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$start_date, &$end_date, &$repeat_interval_unit, &$repeat_interval_num, &$maker_id), $user_amounts_ref);
 		if (!call_user_func_array(array($stmt, 'bind_param'), $args)) {
 			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
 		}
@@ -131,12 +131,12 @@ class UserMain {
 		}
 	}
 
-	public function edit_repeated_transaction($trans_id, $name, $amount, $paid_by_id, $users_amounts, $start_date, $end_date, $repeat_interval_num, $repeat_interval_unit, $note) {
-		$query_head = 'UPDATE ' . $this->trans_table_r . ' SET name=?, amount=?, paid_by_id=?, note=?, start_date=?, end_date=?, repeat_interval_unit=?, repeat_interval_num=?, made_by=?';
+	public function edit_repeated_transaction($trans_id, $name, $amount, $paid_by_id, $users_amounts, $start_date, $end_date, $repeat_interval_num, $repeat_interval_unit, $note, $editter_id) {
+		$query_head = sprintf('UPDATE %s SET name=?, amount=?, paid_by_id=?, note=?, start_date=?, end_date=?, repeat_interval_unit=?, repeat_interval_num=?, changed_by_id=?', $this->trans_table_r);
 		$query_tail = ' WHERE id=?;';
 		$user_amounts_array = array();
 		$user_amounts_ref = array();
-		$parameter_str = 'sdissssis';
+		$parameter_str = 'sdissssii';
 		$count = 0;
 		foreach ($users_amounts as $user => $user_amount) {
 			$query_head .= ', ' . $user . '=?';
@@ -148,7 +148,7 @@ class UserMain {
 		$parameter_str .= 'i';
 		$query = $query_head . $query_tail;
 		$stmt = $this->db->prepare($query);
-		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$start_date, &$end_date, &$repeat_interval_unit, &$repeat_interval_num, &$this->name), $user_amounts_ref, array(&$trans_id));
+		$args = array_merge(array(&$parameter_str, &$name, &$amount, &$paid_by_id, &$note, &$start_date, &$end_date, &$repeat_interval_unit, &$repeat_interval_num, &$editter_id), $user_amounts_ref, array(&$trans_id));
 		if (!call_user_func_array(array($stmt, 'bind_param'), $args)) {
 			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
 		}
@@ -169,17 +169,16 @@ class UserMain {
 	}
 
 	public function get_deposits($all) {
-		$query = sprintf('SELECT * 
-							FROM %s%s ORDER BY action_time DESC;',
+		$query = sprintf('SELECT * FROM %s%s ORDER BY action_time DESC;',
 							$this->pay_table, ($all ? '' : (' WHERE user_id = ' . $this->id)));
 		return $this->deposits = $this->db->query($query);
 	}
 
-	public function make_deposit($name, $amount, $datetime, $note) {
-		$query = sprintf('INSERT INTO %s (name, user_id, user_name, amount, action_time, note) 
+	public function make_deposit($name, $amount, $datetime, $note, $maker_id) {
+		$query = sprintf('INSERT INTO %s (name, user_id, amount, action_time, note, changed_by_id) 
 							VALUES (?, ?, ?, ?, ?, ?);', $this->pay_table);
 		$stmt = $this->db->prepare($query);
-		if (!$stmt->bind_param('sisdss', $name, $this->id, $this->name, $amount, $datetime, $note)) {
+		if (!$stmt->bind_param('sidssi', $name, $this->id, $amount, $datetime, $note, $maker_id)) {
 			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
 		}
 		if (!$stmt->execute()) {
@@ -187,10 +186,10 @@ class UserMain {
 		}
 	}
 
-	public function edit_deposit($deposit_id, $name, $amount, $datetime, $note) {
-		$query = sprintf('UPDATE %s SET name=?, amount=?, action_time=?, note=? WHERE id=?;', $this->pay_table);
+	public function edit_deposit($deposit_id, $name, $amount, $datetime, $note, $editter_id) {
+		$query = sprintf('UPDATE %s SET name=?, amount=?, action_time=?, note=?, changed_by_id=? WHERE id=?;', $this->pay_table);
 		$stmt = $this->db->prepare($query);
-		if (!$stmt->bind_param('sdssi', $name, $amount, $datetime, $note, $deposit_id)) {
+		if (!$stmt->bind_param('sdssii', $name, $amount, $datetime, $note, $editter_id, $deposit_id)) {
 			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
 		}
 		if (!$stmt->execute()) {

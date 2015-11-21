@@ -12,7 +12,6 @@ if ($mysqli->connect_error) {
 }
 
 $curr_user;
-$id_to_user;
 $users;
 $page = basename($_SERVER['PHP_SELF']);
 
@@ -33,12 +32,11 @@ if (array_key_exists('user_id', $_SESSION) && array_key_exists('user_session_tok
 			$config['db']['tables']['transactions_single'], $config['db']['tables']['transactions_repeated']);
 	}
 	$users_sql = $mysqli->query('SELECT * FROM ' . $config['db']['tables']['userinfo'] . ' WHERE verified=1 AND deleted=0;');
-	$id_to_user = array();
 	$users = array();
 	$users_sql->data_seek(0);
 	while ($user = $users_sql->fetch_assoc()) {
+		$user['name'] = $user['first_name'] . ' ' . substr($user['last_name'], 0, 1);
 		$users[$user['id']] = $user;
-	    $id_to_user[$user['id']] = $user['first_name'] . ' ' . substr($user['last_name'], 0, 1);
 	}
 	if ($curr_user->is_deleted || (!$curr_user->is_verified)) {
 		if ($curr_user->is_deleted) {
@@ -54,6 +52,17 @@ if (array_key_exists('user_id', $_SESSION) && array_key_exists('user_session_tok
 	}
 }
 
+if (isset($curr_user)) {
+	if ($curr_user->is_admin) {
+		$view_user_id = array_key_exists('user', $_GET) ? $_GET['user'] : $curr_user->id;
+		$view_user_info = $users[$view_user_id];
+		$view_user = new UserMain($view_user_id, $curr_user->session_token, $view_user_info['name'], $view_user_info['verified'],
+			$view_user_info['admin'],  $user_info['deleted'], $mysqli, $config['db']['tables']['deposits'],
+			$config['db']['tables']['transactions_single'], $config['db']['tables']['transactions_repeated']);
+	} else {
+		$view_user = $curr_user;
+	}
+}
 
 // Post/Redirect/Get structure for form submission
 if (array_key_exists('submission', $_GET)) { // submitted some form, redirect to the same page
@@ -65,7 +74,7 @@ if (array_key_exists('submission', $_GET)) { // submitted some form, redirect to
 		foreach ($_POST as $key => $value) {
 			$_SESSION[$key] = $value;
 		}
-		set_redirect(basename($_SERVER['PHP_SELF']));
+		set_redirect($page . '?user=' . $view_user->id);
 	}
 } else if (array_key_exists('submission', $_SESSION)) {
 	set_clear();
@@ -78,11 +87,11 @@ if (array_key_exists('submission', $_GET)) { // submitted some form, redirect to
 		} else {
 			$result = register_user($_SESSION['register-first-name'], $_SESSION['register-last-name'], $_SESSION['register-email'], $_SESSION['register-password'], $mysqli, $config['db']['tables']['userinfo'], $config['db']['tables']['transactions_single'], $config['db']['tables']['transactions_repeated']);
 			if ($result) {
-				set_session_status('just registered');
-				set_redirect('login.php');
-
 				// delete the register code that was used
 				$mysqli->query('DELETE FROM ' . $config['db']['tables']['register_codes'] . ' WHERE code="' . $_SESSION['register-code'] . '";');
+
+				set_session_status('just registered');
+				set_redirect('login.php');
 			} else {
 				set_session_status('register failed');
 				set_redirect('register.php');
@@ -102,46 +111,45 @@ if (array_key_exists('submission', $_GET)) { // submitted some form, redirect to
 		set_session_status('submission');
 		switch ($_SESSION['submission']) {
 			case 'deposit_submit':
-				$curr_user->make_deposit($_SESSION['deposit-name'], $_SESSION['deposit-amount'], $_SESSION['deposit-date'], $_SESSION['deposit-note']);
+				$view_user->make_deposit($_SESSION['deposit-name'], $_SESSION['deposit-amount'], $_SESSION['deposit-date'], $_SESSION['deposit-note'], $curr_user->id);
 				break;
 			case 'deposit_edit':
-				$curr_user->edit_deposit($_SESSION['deposit-id'], $_SESSION['deposit-name'], $_SESSION['deposit-amount'], $_SESSION['deposit-date'], $_SESSION['deposit-note']);
+				$view_user->edit_deposit($_SESSION['deposit-id'], $_SESSION['deposit-name'], $_SESSION['deposit-amount'], $_SESSION['deposit-date'], $_SESSION['deposit-note'], $curr_user->id);
 				break;
 			case 'deposit_delete':
-				$curr_user->delete_deposit($_SESSION['deposit-id']);
+				$view_user->delete_deposit($_SESSION['deposit-id']);
 				break;
 			case 'transaction_submit':
 				$user_amounts = array();
 				$paid_by_id = get_user_amounts($user_amounts);
 				if (array_key_exists('trans-repeat', $_SESSION) && $_SESSION['trans-repeat'] === 'yes') {
-					$curr_user->make_repeated_transaction($_SESSION['trans-name'], $_SESSION['trans-total-amount'], 
+					$view_user->make_repeated_transaction($_SESSION['trans-name'], $_SESSION['trans-total-amount'], 
 						$paid_by_id, $user_amounts, $_SESSION['trans-date'], $_SESSION['trans-end-date'], 
-						$_SESSION['trans-interval-num'], $_SESSION['trans-interval-unit'], $_SESSION['trans-note']);
+						$_SESSION['trans-interval-num'], $_SESSION['trans-interval-unit'], $_SESSION['trans-note'], $curr_user->id);
 				} else {
-					$curr_user->make_single_transaction($_SESSION['trans-name'], $_SESSION['trans-total-amount'], 
-						$paid_by_id, $user_amounts, $_SESSION['trans-date'], $_SESSION['trans-note']);				
+					$view_user->make_single_transaction($_SESSION['trans-name'], $_SESSION['trans-total-amount'], 
+						$paid_by_id, $user_amounts, $_SESSION['trans-date'], $_SESSION['trans-note'], $curr_user->id);				
 				}
 				break;
 			case 'transaction_edit':
 				$user_amounts = array();
 				$paid_by_id = get_user_amounts($user_amounts);
 				if (array_key_exists('trans-repeat', $_SESSION) && $_SESSION['trans-repeat'] === 'yes') {
-					$curr_user->edit_repeated_transaction($_SESSION['trans-id'], $_SESSION['trans-name'], 
+					$view_user->edit_repeated_transaction($_SESSION['trans-id'], $_SESSION['trans-name'], 
 						$_SESSION['trans-total-amount'], $paid_by_id, $user_amounts, $_SESSION['trans-date'],
-						$_SESSION['trans-end-date'], $_SESSION['trans-interval-num'], $_SESSION['trans-interval-unit'], $_SESSION['trans-note']);
+						$_SESSION['trans-end-date'], $_SESSION['trans-interval-num'], $_SESSION['trans-interval-unit'], $_SESSION['trans-note'], $curr_user->id);
 				} else {
-					$curr_user->edit_single_transaction($_SESSION['trans-id'], $_SESSION['trans-name'], 
-						$_SESSION['trans-total-amount'], $paid_by_id, $user_amounts, $_SESSION['trans-date'], $_SESSION['trans-note']);				
+					$view_user->edit_single_transaction($_SESSION['trans-id'], $_SESSION['trans-name'], 
+						$_SESSION['trans-total-amount'], $paid_by_id, $user_amounts, $_SESSION['trans-date'], $_SESSION['trans-note'], $curr_user->id);				
 				}
 				break;
 			case 'transaction_delete':
 				if ($_SESSION['trans-type'] === 's') {
-					$curr_user->delete_single_transaction($_SESSION['trans-id']);
+					$view_user->delete_single_transaction($_SESSION['trans-id']);
 				} else {
-					$curr_user->delete_repeated_transaction($_SESSION['trans-id']);
+					$view_user->delete_repeated_transaction($_SESSION['trans-id']);
 				}
 				break;
-			
 		}
 		if (isset($curr_user) && $curr_user->is_admin) {
 			switch ($_SESSION['submission']) {
@@ -191,6 +199,8 @@ if (has_clear()) {
 if (has_redirect()) {
 	redirect();
 }
+
+	
 
 function set_session_status($status) {
 	$_SESSION['session_status'] = $status;
@@ -332,9 +342,9 @@ function login($email, $password, $db, $user_table) {
 }
 
 function get_user_amounts(&$user_amounts) {
-	global $id_to_user;
+	global $users;
 	$paid_by_id = 0;
-	foreach ($id_to_user as $id => $name) {
+	foreach ($users as $id => $user) {
 		$key = 'user_' . $id . '_amount';
 		if ($id == $_SESSION['trans-paid-by']) {
 			$paid_by_id = $id;

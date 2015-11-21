@@ -1,7 +1,3 @@
-<?php
-
-$page = basename($_SERVER['PHP_SELF']);
-echo '
 <nav class="navbar navbar-default">
 	<div class="container-fluid">
 	    <div class="navbar-header">
@@ -13,26 +9,42 @@ echo '
 	      	</button>
 	        <a class="navbar-brand" href="index.php">House Banking</a>
 	    </div>
-    	<div class="collapse navbar-collapse" id="navbar-collapse-1">';
-if (isset($curr_user)) { // logged in
-	echo    '<ul class="nav navbar-nav">
-				<li' . ($page === 'index.php' ? ' class="active"' : '') . '><a href="index.php">Home</a></li>
-        		<li' . ($page === 'balance.php' ? ' class="active"' : '') . '><a href="balance.php">View Balance</a></li>
-      		</ul>
-      		<ul class="nav navbar-nav navbar-right">' . 
-				($curr_user->is_admin ? '<li' . ($page === 'admin.php' ? ' class="active"' : '') . '><a href="admin.php">Manage Users</a></li>' : '') .
-      			'<p class="navbar-text">Logged in as ' . $curr_user->name . ($curr_user->is_admin ? ' (admin)' : '') . '</p> 
-      			<li><a href="index.php?submission=logout">Logout</a></li>';
-} else {
-	echo 	'<ul class="nav navbar-nav navbar-right">
-				<li' . ($page === 'login.php' ? ' class="active"' : '') . '><a href="login.php">Login</a></li>
-				<li' . ($page === 'register.php' ? ' class="active"' : '') . '><a href="register.php">Register</a></li>';
-}
-echo '
-      		</ul>
+    	<div class="collapse navbar-collapse" id="navbar-collapse-1">
+
+		<?php if (isset($curr_user)): // logged in ?>
+
+			<ul class="nav navbar-nav">
+				<li class=<?= $page === 'index.php' ? 'active' : ''; ?>><a href="index.php">Home</a></li>
+		    	<li class=<?= $page === 'balance.php' ? 'active' : ''; ?>><a href="balance.php">View Balance</a></li>
+		    </ul>
+		    <ul class="nav navbar-nav navbar-right">
+
+		    <?php if ($curr_user->is_admin): ?>
+		    	<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">View as <?= $users[$view_user_id]['name']; ?><span class="caret"></span></a>
+					<ul class="dropdown-menu">
+					
+					<?php foreach ($users as $id => $user): ?>
+						<li><a href=<?= '?user=' . $id ?>><?= $user['name'] ?></a></li>	
+					<?php endforeach; ?>
+					
+					</ul>
+				</li>
+				<li class=<?= $page === 'admin.php' ? 'active' : '' ?>><a href="admin.php">Manage Users</a></li>
+				<p class="navbar-text">Logged in as <?= $curr_user->name; ?> (admin)</p>
+
+		    <?php else: ?>
+		    	<p class="navbar-text">Logged in as <?= $curr_user->name; ?></p>
+			
+			<?php endif; ?>
+		    	<li><a href="index.php?submission=logout">Logout</a></li>
+		   	</ul>
+		<?php else: ?>
+			<ul class="nav navbar-nav navbar-right">
+				<li class=<?= $page === 'login.php' ? 'active' : '' ?>><a href="login.php">Login</a></li>
+				<li class=<?= $page === 'register.php' ? 'active' : '' ?>><a href="register.php">Register</a></li>
+			</ul>
+		<?php endif; ?>
     	</div>
 	</div>
 </nav>
-';
-
-?>
