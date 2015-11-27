@@ -80,8 +80,15 @@ if (array_key_exists('submission', $_GET)) { // submitted some form, redirect to
 	set_clear();
 	if ($_SESSION['submission'] === 'register_user') {
 		// checks that register code is correct
-		$query = 'SELECT * FROM ' . $config['db']['tables']['register_codes'] . ' WHERE code="' . $_SESSION['register-code'] . '";';
-		$result = $mysqli->query($query);
+		$query = sprintf('SELECT * FROM %s WHERE code=?;', $config['db']['tables']['register_codes']);
+		$stmt = $mysqli->prepare($query);
+		if (!$stmt->bind_param('s', $_SESSION['register-code'])) {
+			echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
+		}
+		if (!$stmt->execute()) {
+			echo 'Execution failed: (' . $stmt->errno . ') ' . $stmt->error;
+		}
+		$result = $stmt->get_result();
 		if (!$result || $result->num_rows === 0) {			
 			set_session_status('register code not found');
 		} else {

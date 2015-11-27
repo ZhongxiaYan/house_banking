@@ -102,13 +102,13 @@
 	  				<label>Repeat:</label>
 	  				<input type="checkbox" name="trans-repeat" value="yes">
 				</div>
-				<div class="form-group start-date" required>
+				<div class="form-group" required>
 					<label>Date:</label>
-					<input type="date" class="form-control" name="trans-date" max=<?= date('Y-m-d') ?> value=<?= date('Y-m-d') ?>>
+					<input type="date" class="form-control" name="trans-date" max=<?= date('Y-m-d') ?> value=<?= date('Y-m-d') ?> id="trans-start-date">
 				</div>
 				<div class="form-group trans-repeat-info" style="display:none">
 					<label>Stop Date:</label>
-					<input type="date" class="form-control" name="trans-end-date" value=<?= date('Y-m-d') ?>>
+					<input type="date" class="form-control" name="trans-end-date" min=<?= date('Y-m-d') ?> value=<?= date('Y-m-d') ?> id="trans-end-date">
 					<label>Interval:</label>
 					<input type="number" class="form-control" step="1" min="1" name="trans-interval-num" id="trans-interval-num" value="1">
 					<select class="form-control" name="trans-interval-unit" id="trans-interval-unit">

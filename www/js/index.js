@@ -36,19 +36,23 @@ $(document).ready(function() {
 	});
 	$('#append-top').click(function() {
 		table.children('tbody').prepend(get_new_row(table));
+		update_height_width();
 	});
 	$('#append-bottom').click(function() {
 		table.children('tbody').append(get_new_row(table));
+		update_height_width();
 	});
 	$('#append-left').click(function() {
 		table.children('tbody').children('tr').each(function() {
-			$(this).prepend('<td></td>');
+			$(this).prepend('<td contenteditable></td>');
 		});
+		update_height_width();
 	});
 	$('#append-right').click(function() {
 		table.children('tbody').children('tr').each(function() {
-			$(this).append('<td></td>');
+			$(this).append('<td contenteditable></td>');
 		});
+		update_height_width();
 	});
 	$('#interactive-resize').click(start_resize);
 	$('#restore').click(restore_data);
@@ -102,7 +106,7 @@ function start_resize() {
 										   .addClass('editting-cell-covered');
 								});
 		}
-	});
+	}).end().attr('title', 'Select first corner');
 	$(this).unbind().click(done_resize);
 }
 
@@ -144,16 +148,31 @@ function cancel_resize() {
 	$('#editable-table').find('td').removeClass('editting-cell selected-cell editting-cell-covered').unbind();
 	$('#restore').unbind().click(restore_data).text('Restore');
 	$('#interactive-resize').unbind().click(start_resize).text('Interactive Crop');
+	$('#editable-table').removeAttr('title');
 }
 
 function resize_select() {
-	if ($('.selected-cell').length < 2) {
+	var num_cells = $('.selected-cell').length;
+	if (num_cells < 2) {
 		$(this).addClass('selected-cell').unbind('click').click(resize_deselect);
+		if (num_cells === 0) {
+			$('#editable-table').attr('title', 'Select second corner or click "Done"');
+		} else {
+			$('#editable-table').attr('title', 'Click "Done" to crop');
+		}
+	} else {
+		$('#editable-table').attr('title', 'Click "Done" to crop');
 	}
 }
 
 function resize_deselect() {
 	$(this).removeClass('selected-cell editting-cell-covered').unbind('click').click(resize_select);
+	var num_cells = $('.selected-cell').length;
+	if (num_cells === 0) {
+		$('#editable-table').attr('title', 'Select first corner');
+	} else if (num_cells === 1) {
+		$('#editable-table').attr('title', 'Select second corner or click "Done"');
+	}
 }
 
 function update_height_width() {

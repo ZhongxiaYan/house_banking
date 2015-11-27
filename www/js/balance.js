@@ -77,6 +77,12 @@ $(document).ready(function() {
     	}
     }).trigger('change');
 
+    $('#trans-form').find('#trans-start-date').change(function() {
+    	console.log($('#trans-form').find('#trans-end-date'));
+    	console.log($(this).val());
+    	$('#trans-form').find('#trans-end-date').attr('min', $(this).val());
+    });
+
 });
 
 // gets user selected by trans-paid-by field
