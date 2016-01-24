@@ -30,11 +30,6 @@ $(document).ready(function() {
         return true;
     });
 
-    $('#deposit-amount').blur(function() { // keeps amount with 2 decimal places
-        var amount = $(this).val();
-        $(this).val(Math.ceil(100 * amount) / 100);
-    });
-    
 
     $('.transaction-hidden-row').children().hide().end()
                     .prev('.transaction-expandable-row').css('cursor', 'pointer');
@@ -42,9 +37,6 @@ $(document).ready(function() {
         $(this).next('.transaction-hidden-row').children().slideToggle();
     });
     
-    // adjust display based on who is selected to have paid and total amount of payment
-    $('#trans-paid-by').change(choose_paid_user);
-    $('#trans-total-amount').blur(split_total_amount);
 
     $('.transaction-edit-button').click(make_transaction_form); // makes a form to edit the transaction when clicked
     $('.transaction-delete-button').click(function(e) {
@@ -83,8 +75,16 @@ $(document).ready(function() {
         $('#trans-form').find('#trans-end-date').attr('min', $(this).val());
     });
 
+    // user interface for assigning paid and owed amounts
+
     // sources of dragging
-    $('.drag-src, .drag-user').on('dragstart', drag_start_action);
+    var owe_money_dest = $('.owed');
+    $('.drag-src').on('dragstart', drag_start_action);
+    $('.drag-src').each(function() {
+                      convert_src_to_user($(this).attr('user-id'), owe_money_dest, 'owed');
+                      set_user_state(owe_money_dest, $(this), owe_money_dest.attr('state'), 'owed');
+                      recalculate_user_amount(owe_money_dest);
+                  });
 
     // destination of dragging
     $('.drag-dest').on('dragover', drag_over).end()
@@ -97,34 +97,216 @@ $(document).ready(function() {
     $('.split-custom').click(split_custom_action);
 });
 
+// converts a drag-src draggable object to drag-user
+function convert_src_to_user(user_id, dest, origin_str) {
+    var src = $('.drag-src.user-' + user_id).clone();
+    src.on('dragstart', drag_start_action);
+    src.addClass('drag-user');
+    src.removeClass('drag-src');
+
+    var close_button = $('<a class="close-button"></a>');
+    src.append(close_button);
+    close_button.click(function() {
+        var drag_dest = $(this).closest('.drag-dest');
+        $(this).parent().remove();
+        recalculate_user_amount(drag_dest);
+    });
+
+    // displays amount
+    var amount_div = $('<div class="amount-div" amount="0">$0</div>');
+    src.append(amount_div);
+    src.attr('origin', origin_str);
+    dest.append(src);
+    return src;
+}
+
+// set input state of users in the container
+function set_container_state(container, state) {
+    var users = container.find('.drag-user');
+    var prev_state = container.attr('state');
+    set_user_state(container, users, state, prev_state);
+    container.attr('state', state);
+    
+    var input = container.children('input');
+    switch (state) {
+        case 'custom':
+            input.remove();
+            break;
+        case 'prop':
+        case 'even':
+            if (input.length === 0) {
+                var input = $('<input type="number" class="form-control input-sm" step="0.01" placeholder="Enter total">');
+                // add total inputs before buttons
+                var buttons = container.children('.btn-group');
+                buttons.after(input);
+                input.on('change keyup', function() {
+                    recalculate_user_amount(container);
+                });
+            }
+    }
+    recalculate_user_amount(container);
+}
+
+function set_user_state(container, users, state, prev_state) {
+    users.find('input').remove(); // remove input no matter what
+    switch (state) {
+        case 'input':
+        case 'custom':
+        case 'prop':
+            append_user_input(container, users, state);
+            break;
+        case null:
+        case 'even':
+        default:
+            break;
+    }
+}
+
+// append user input to each .drag-user
+function append_user_input(container, user, state) {
+    var note = null;
+    switch (state) {
+        case 'custom':
+            note = 'Enter amount';
+            break;
+        case 'prop':
+            note = 'Enter decimal weight';
+            break;
+    }
+    var num_input = $('<input type="number" class="form-control input-sm" step="0.01" placeholder="' + note + '">');    
+    user.each(function() {
+        var new_input = num_input.clone();
+        new_input.on('change keyup', function() {
+            recalculate_user_amount(container);
+        });
+        $(this).append(new_input);
+    });
+}
+
+function sum_user_inputs(container) {
+    var sum = 0;
+    container.children('.drag-user').children('input').each(function() {
+        var input = $(this).val();
+        if (input) {
+            sum += parseFloat($(this).val());
+        }
+    })
+    return sum;
+}
+
+// takes any children of the container
+function recalculate_user_amount(container) {
+    var state = container.attr('state');
+    var drag_users = container.children('.drag-user');
+    switch (state) {
+        case 'custom':
+            drag_users.children('input').each(function() {
+                var new_amt = $(this).val();
+                if (new_amt) {
+                    new_amt = (parseFloat(new_amt)).toFixed(2);
+                } else {
+                    new_amt = 0;
+                }
+                var drag_user = $(this).parent();
+                var amount_div = drag_user.find('.amount-div');
+                amount_div.text('$' + new_amt);
+                amount_div.attr('amount', new_amt);                
+            });
+            break;
+        case 'prop':
+            var total = container.children('input').val();
+            var total_proportion = sum_user_inputs(container);
+            drag_users.children('input').each(function() {
+                var input = $(this).val();
+                var new_amt = 0;
+                if (input && total_proportion > 0) {
+                    new_amt = (total * parseFloat(input) / total_proportion).toFixed(2);
+                }
+                var drag_user = $(this).parent();
+                var amount_div = drag_user.find('.amount-div');
+                amount_div.text('$' + new_amt);
+                amount_div.attr('amount', new_amt);
+            });
+            break;
+        case 'even':
+            var total = container.children('input').val();
+            if (!total) {
+                total = 0;
+            }
+            var average = 0;
+            if (drag_users.length > 0) {
+                average = (parseFloat(total) / drag_users.length).toFixed(2);
+            }
+            drag_users.each(function() {
+                var amount_div = $(this).find('.amount-div');
+                amount_div.text('$' + average);
+                amount_div.attr('amount', average);                
+            });
+            break;
+        default:
+            drag_users.each(function() {
+                var amount_div = $(this).find('.amount-div');
+                amount_div.text('$0');
+                amount_div.attr('amount', '0');
+            });
+    }
+    update_user_net(container.closest('form'));
+}
+
+function update_user_net(form) {
+    var final_amounts = form.children('.user-final-amt');
+    final_amounts.children('input').each(function() {
+        var user_id = $(this).attr('user-id');
+        var user_total = 0;
+        form.find('.user-' + user_id).each(function() {
+            var amount_div = $(this).find('.amount-div');
+            // there is an amount in the user
+            if (amount_div.length === 1) {
+                // in the .paid container
+                if ($(this).closest('.paid').length === 1) {
+                    user_total -= parseFloat(amount_div.attr('amount'));
+                } else if ($(this).closest('.owed').length === 1) {
+                    user_total += parseFloat(amount_div.attr('amount'));
+                }
+            }
+        });
+        $(this).val((user_total).toFixed(2));
+    });
+}
+
+
+
 function split_evenly_action() {
+    var container = $(this).closest('.drag-dest');
+    set_container_state(container, 'even');
+    
     $(this).siblings().removeAttr('disabled');
     $(this).attr('disabled', 'disabled');
 }
 
 function split_proportionally_action() {
+    var container = $(this).closest('.drag-dest');
+    set_container_state(container, 'prop');
+
     $(this).siblings().removeAttr('disabled');
     $(this).attr('disabled', 'disabled');
 }
 
 function split_custom_action() {
     var container = $(this).closest('.drag-dest');
-    var num_input = $('<input type="number" class="form-control input-sm" step="0.01">');
-    container.find('.drag-user').each(function() {
-        $(this).append(num_input.clone());
-    });
+    set_container_state(container, 'custom');
     $(this).siblings().removeAttr('disabled')
     $(this).attr('disabled', 'disabled');
 }
+
+
 
 function drag_start_action(evt) {
     var src = $(evt.target);
     var user_id = src.attr('user-id');
     var origin = src.attr('origin');
     evt.originalEvent.dataTransfer.setData('user_id', user_id);
-    if (origin) {
-        evt.originalEvent.dataTransfer.setData('origin', origin);
-    }
+    evt.originalEvent.dataTransfer.setData('origin', origin);
 }
 
 function drag_over(evt) {
@@ -154,77 +336,22 @@ function drag_drop(evt) {
             curr_class = 'owed';
         }
         var src = null;
-        if (origin) { // coming from some origin, don't clone, just remove the other one
-            src = $('.drag-user.user-' + user_id);
-        } else { // coming from source
-            src = $('.drag-src.user-' + user_id).clone();
-            src.addClass('drag-user');
-            src.removeClass('drag-src');
-            var close_button = $('<a class="close-button"></a>');
-            src.append(close_button);
-            close_button.click(function() {
-                $(this).parent().remove();
-            });
+        if (origin !== 'source') { // coming from some origin, don't clone, just remove the other one
+            src = dest.closest('form').find('.drag-user.user-' + user_id);
+            var origin_container = src.closest('.drag-dest');
+            src.attr('origin', curr_class);
+            dest.append(src);
+            recalculate_user_amount(origin_container);
+        } else { // coming from source, add an amount display and a close button
+            src = convert_src_to_user(user_id, dest, curr_class);
         }
-        src.attr('origin', curr_class);
-        // insert right before the buttons
-        var buttons = dest.children().last();
-        buttons.before(src);
-        $('.drag-user').on('dragstart', drag_start_action);
+        
+        // always remove input box if whether there is one or not and then update to existing state
+        set_user_state(dest, src, dest.attr('state'), 'input');
+        recalculate_user_amount(dest);
     }
 }
 
-// gets user selected by trans-paid-by field
-function choose_paid_user() {
-    var form = $(this).closest('form');
-    var selected_id = $(this).find('option:selected').val();
-    var total_amount = form.find('#trans-total-amount').val();
-    adjust_display_compensation(form.find('.user-amount'), total_amount, selected_id);
-}
-
-// shows subtraction of the total amount for the user that paid the amount
-function adjust_display_compensation(user_amounts, total_amount, selected_id) {
-    var old_user_name = adjust_display_compensation.old_user_name;
-    var new_user_name;
-    if (!total_amount) {
-        total_amount = 0;
-    }
-    user_amounts.each(function() {
-        var name = $(this).attr('name');
-        if (name === old_user_name) {
-            $(this).parent().next('span').remove();
-        }
-        if (name === 'user_' + selected_id + '_amount') {
-            // show subtraction of total amount from this user
-            $(this).parent().after('<span id="adjustment-amount"> - ' + total_amount + ' </span>');
-            new_user_name = name;
-        }
-    });
-    adjust_display_compensation.old_user_name = new_user_name;
-}
-
-// for the closest form, split the total amount evenly among all people in house
-function split_total_amount() {
-    var form = $(this).closest('form');
-    var selected_id = form.find('#trans-paid-by option:selected').val();
-    var total_amount = parseFloat($(this).val());
-    total_amount = Math.ceil(100 * total_amount) / 100;
-    $(this).val(total_amount);
-    var amounts = form.find('.user-amount');
-    adjust_display_compensation(amounts, total_amount, selected_id);
-    var old_user_amount = this.user_amount;
-    var new_user_amount = Math.ceil(100 * total_amount / amounts.length) / 100;
-    amounts.each(function() {
-        if (!old_user_amount) {
-            $(this).val(new_user_amount);
-        } else if (total_amount) {
-            if (!$(this).val() || parseFloat($(this).val()) === old_user_amount) {
-                $(this).val(new_user_amount);
-            }
-        }
-    });
-    this.user_amount = new_user_amount;
-}
 
 // clones the deposit form at the top of the page to allow deposit editting
 function make_deposit_form() {
@@ -260,7 +387,6 @@ function make_deposit_form() {
 
 // removes the deposit form added by make_deposit_form and revert back to previous state
 function cancel_deposit_form() {
-    console.log($(this).closest('td').children('form:last-child'));
     $(this).closest('form').children('form:last-child').remove();
     $(this).unbind().click(make_deposit_form);
     $(this).text('Edit');
@@ -354,8 +480,6 @@ function make_transaction_form() {
     if (selected_unit !== null) {
         selected_unit.attr('selected', 'selected');
     }
-    trans_form.find('#trans-paid-by').change(choose_paid_user).change();
-    trans_form.find('#trans-total-amount').blur(split_total_amount);
 
     $(this).unbind().click(cancel_transaction_form);
     $(this).text('Cancel');

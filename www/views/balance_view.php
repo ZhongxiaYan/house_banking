@@ -56,6 +56,14 @@ require_once $PAGES['util'];
                 border-radius: 5px;
             }
 
+            .paid > .drag-user > .amount-div {
+                color: green;
+            }
+
+            .owed > .drag-user > .amount-div {
+                color: red;
+            }
+
             a.close-button {
                 float: right;
                 margin-top: -10px;
@@ -132,10 +140,6 @@ require_once $PAGES['util'];
                     <label>Name:</label>
                     <input type="text" class="form-control" name="trans-name" required>
                 </div>
-                <div class="form-group" required>
-                    <label>Amount:</label>
-                    <input type="number" class="form-control input-sm" step="0.01" name="trans-total-amount" id="trans-total-amount">
-                </div>
                 <div class="form-group trans-repeat-toggle">
                     <label>Repeat:</label>
                     <input type="checkbox" name="trans-is-repeated" value="1">
@@ -161,10 +165,11 @@ require_once $PAGES['util'];
                 </div>
 
                 <br><br>
+                <label>Drag these users if needed:</label>
 
                 <?php foreach ($active_users as $id => $user): ?>
 
-                <div class=<?= e("'form-group drag-src user-$id'") ?> user-id=<?= e($id) ?> draggable="true">
+                <div class=<?= e("'form-group drag-src user-$id'") ?> user-id=<?= e($id) ?> draggable="true" origin="source">
                     <label><?= e($user->name) ?></label>
                 </div>
 
@@ -174,31 +179,38 @@ require_once $PAGES['util'];
 
                 <div class="row">
                     <div class="col-md-5 drag-dest paid">
-                        <label>Paid money</label>
+                        <label>Users who paid money (out of pocket):</label>
                         <br>
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary split-even">Split Evenly</button>
                             <button type="button" class="btn btn-primary split-prop">Split Proportionally</button>
                             <button type="button" class="btn btn-primary split-custom">Custom Amounts</button>
                         </div>
+                        <br>
+                        <br>
                     </div>
                     <div class="col-md-5 col-md-offset-2 drag-dest owed">
-                        <label>Owe money</label>
+                        <label>Users who owed money:</label>
                         <br>
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary split-even">Split Evenly</button>
                             <button type="button" class="btn btn-primary split-prop">Split Proportionally</button>
                             <button type="button" class="btn btn-primary split-custom">Custom Amounts</button>
                         </div>
+                        <br>
+                        <br>
                     </div>
                 </div>
                 <br>
 
+                <label>Net amounts owed:</label>
+                <br>
+
                 <?php foreach ($active_users as $id => $user): ?>
 
-                <div class="form-group">
+                <div class="form-group user-final-amt">
                     <label><?= e("$user->name:") ?></label>
-                    <input type="number" class=<?= e("'form-control input-sm user-$id'") ?> step="0.01" name=<?= e("user_${id}_amount") ?> user-id=<?= e($id) ?> readonly>
+                    <input type="number" class=<?= e("'form-control input-sm user-$id'") ?> step="0.01" name=<?= e("user_${id}_amount") ?> user-id=<?= e($id) ?> value="0" readonly>
                 </div>
 
                 <?php endforeach; ?>
