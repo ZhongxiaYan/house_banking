@@ -43,15 +43,15 @@ while ($i-- > 0) {
             $user_x_amount = $row[$user_x_amount_string];
             $total_amount += floatval($user_x_amount);
 
-            $row[$user_x_amount_string] = number_format($user_x_amount, 2);
             $row["${user_x_amount_string}_color"] = ($user_x_amount > 0) ? 'red' : 'green';
+            $row[$user_x_amount_string] = number_format($user_x_amount, 2);
         }
-        $row['amount'] = number_format($total_amount, 2);
         $row['amount_color'] = ($total_amount > 0) ? 'red' : 'green';
+        $row['amount'] = number_format($total_amount, 2);
         $total_balance -= $total_amount;
     }
-    $row['balance'] = number_format($total_balance, 2);
     $row['balance_color'] = ($total_balance >= 0) ? 'green' : 'red';
+    $row['balance'] = number_format($total_balance, 2);
     $table[$i] = $row;
 }
 

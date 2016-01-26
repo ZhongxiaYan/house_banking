@@ -67,11 +67,12 @@ function get_deposit_rows($deposits, &$index, &$balance, $endtime, $entries_prin
     // loop through the original rows
     while ($index < count($deposits) && ($deposits[$index]['action_time'] >= $endtime || $entries_printed >= $max_entries)) {
         $deposit_row = $deposits[$index];
-        $deposit_row['amount'] = number_format($deposit_row['amount'], 2);
+        $balance -= $deposit_row['amount'];
+        
         $deposit_row['amount_color'] = ($deposit_row['amount'] < 0) ? 'red' : 'green';
+        $deposit_row['amount'] = number_format($deposit_row['amount'], 2);
         $deposit_row['date'] = date('Y-m-d', strtotime($deposit_row['action_time']));
         $new_deposit_rows[] = $deposit_row;
-        $balance -= $deposit_row['amount'];
         $index++;
     }
     return $new_deposit_rows;
@@ -92,7 +93,8 @@ function get_transaction_rows($current_users, $view_user_amount_string, $transac
     // loop through the original rows
     while ($index < count($transactions) && ($transactions[$index]['action_time'] >= $endtime || $entries_printed >= $max_entries)) {
         $transaction_row = $transactions[$index];
-        $transaction_row[$view_user_amount_string] = number_format($transaction_row[$view_user_amount_string], 2);
+        $balance += $transaction_row[$view_user_amount_string];
+
         $transaction_row['view_user_amount_color'] = ($transaction_row[$view_user_amount_string] > 0) ? 'red' : 'green';
         $transaction_row['date'] = date('Y-m-d', strtotime($transaction_row['action_time']));
     
@@ -104,7 +106,6 @@ function get_transaction_rows($current_users, $view_user_amount_string, $transac
         $transaction_row['user_x_amounts'] = $user_x_amounts;
                     
         $new_transaction_rows[] = $transaction_row;
-        $balance += $transaction_row[$view_user_amount_string];
 
         $index++;
     }
