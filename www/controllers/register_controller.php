@@ -99,7 +99,6 @@ class RegisterController {
                 $this->db->query($query);
 
                 set_session('status', 'just_registered');
-                exit;
                 redirect($PAGES['login']);
                 exit;
             } else {
