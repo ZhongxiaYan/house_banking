@@ -52,6 +52,11 @@ $(document).ready(function() {
         return true;
     });
 
+    $('#deposit-amount').blur(function() {
+        var val = parseFloat($(this).val());
+        $(this).val(val.toFixed(2));
+    });
+
     // toggle transaction form between single or repeated transaction
     $('.trans-repeat-toggle input').change(function() {
         if ($(this).is(':checked')) { // repeated
@@ -59,47 +64,28 @@ $(document).ready(function() {
             $(this).parent('.form-group').siblings('.trans-repeat-info').each(function() {
                 $(this).css('display', 'inline');
             });
-            $(this).parent('.form-group').siblings('.trans-start-date').children('label').text('Start date:');
+            var start_date_div = $(this).parent('.form-group').siblings('.trans-date');
+            start_date_div.children('label').text('Start date:');
+            start_date_div.children('input').change();
         } else {
             // hide fields for repeated transactions
             $(this).parent('.form-group').siblings('.trans-repeat-info').each(function() {
                 $(this).css('display', 'none');
             });
-            $(this).parent('.form-group').siblings('.trans-start-date').children('label').text('Date:');
+            var start_date_div = $(this).parent('.form-group').siblings('.trans-date');
+            start_date_div.children('label').text('Date:');
+            start_date_div.children('input').change();
         }
     }).trigger('change');
-
-    $('#trans-form').find('#trans-start-date').change(function() {
-        console.log($('#trans-form').find('#trans-end-date'));
-        console.log($(this).val());
-        $('#trans-form').find('#trans-end-date').attr('min', $(this).val());
-    });
-
+    
     // user interface for assigning paid and owed amounts
-
-    // sources of dragging
-    var owe_money_dest = $('.owed');
-    $('.drag-src').on('dragstart', drag_start_action);
-    $('.drag-src').each(function() {
-                      convert_src_to_user($(this).attr('user-id'), owe_money_dest, 'owed');
-                      set_user_state(owe_money_dest, $(this), owe_money_dest.attr('state'), 'owed');
-                      recalculate_user_amount(owe_money_dest);
-                  });
-
-    // destination of dragging
-    $('.drag-dest').on('dragover', drag_over).end()
-                   .on('drop', drag_drop);
-
-    $('.split-even').click(split_evenly_action);
-
-    $('.split-prop').click(split_proportionally_action);
-
-    $('.split-custom').click(split_custom_action);
+    bind_all_transaction_amount_handlers($('#trans-form'));
 });
 
 // converts a drag-src draggable object to drag-user
 function convert_src_to_user(user_id, dest, origin_str) {
-    var src = $('.drag-src.user-' + user_id).clone();
+    var src = dest.closest('form').find('.drag-src.user-' + user_id).clone();
+
     src.on('dragstart', drag_start_action);
     src.addClass('drag-user');
     src.removeClass('drag-src');
@@ -271,6 +257,11 @@ function update_user_net(form) {
             }
         });
         $(this).val((user_total).toFixed(2));
+        if (user_total > 0) {
+            $(this).css('color', 'red');
+        } else {
+            $(this).css('color', 'green');
+        }
     });
 }
 
@@ -352,24 +343,71 @@ function drag_drop(evt) {
     }
 }
 
+function bind_all_transaction_amount_handlers(form) {
+    // sets min for end based on start date
+    form.find('.trans-date').children('input').change(function() {
+        var end_date = $(this).parent().siblings('.trans-repeat-info').find('.trans-end-date');
+        if (end_date.parent().css('display') === 'none') {
+            end_date.attr('min', '');
+        } else {
+            end_date.attr('min', $(this).val());
+        }
+    }).change();
+    var owe_money_dest = form.find('.owed');
+    form.find('.drag-src').on('dragstart', drag_start_action).end();
+    form.find('.drag-src').each(function() {
+        convert_src_to_user($(this).attr('user-id'), owe_money_dest, 'owed');
+        set_user_state(owe_money_dest, $(this), owe_money_dest.attr('state'), 'owed');
+        recalculate_user_amount(owe_money_dest);
+    });
+
+    // destination of dragging
+    form.find('.drag-dest').on('dragover', drag_over).end()
+                           .on('drop', drag_drop);
+    form.find('.split-even').click(split_evenly_action);
+    form.find('.split-prop').click(split_proportionally_action);
+    form.find('.split-custom').click(split_custom_action);
+}
 
 // clones the deposit form at the top of the page to allow deposit editting
 function make_deposit_form() {
     var deposit_form = $('#deposit-form').clone();
 
     // stores information in the table into a map
-    var deposit_info = new Object;
-    $(this).closest('tr').prev().children('td').each(function() {
-        deposit_info[$(this).attr('type')] = $(this).text();
+    var deposit_info = {};
+
+    // send ajax request for more information regarding the deposit
+    var message = {};
+    deposit_info['session-token'] = message['session-token'] = deposit_form.find('.session-token').val();
+    deposit_info['deposit-id'] = message['deposit-id'] = $(this).val();
+    message['action'] = 'get_deposit_ajax';
+    var request = $.post("balance.php?submission=get_deposit_ajax", message, function(return_data) {
+        // console.log(return_data);
+        var return_obj = JSON.parse(return_data);
+        if (return_obj['success'] !== '1') {
+            return;
+        }
+        deposit_info['deposit-name'] = return_obj['name'];
+        deposit_info['deposit-amount'] = return_obj['amount'];
+        deposit_info['deposit-date'] = return_obj['date'];
+        deposit_info['deposit-note'] = return_obj['note'];
+        
+        // set field values here so return_obj doesn't disappear
+        deposit_form.find(':input').each(function() {
+            var field_name = $(this).attr('name');
+            if (deposit_info.hasOwnProperty(field_name)) { // field should be changed
+                // console.log(field_name);
+                // console.log(deposit_info[field_name]);
+                $(this).val(deposit_info[field_name]);
+            }
+        });
+    }, 'html');
+
+    request.error(function(jqXHR, textStatus, errorThrown) {
+        alert('Error data not saved: ' + textStatus, errorThrown);
+        console.error('Error: ' + textStatus, errorThrown);
     });
 
-    // set the default values of all the fields to be existing info
-    deposit_form.find(':input').each(function() {
-        var field_name = $(this).attr('name');
-        if (deposit_info.hasOwnProperty(field_name)) { // field should be changed
-            $(this).val(deposit_info[field_name]);
-        }
-    });
 
     // changes form submission information
     deposit_form.attr('action', deposit_form.attr('action').replace('add', 'edit'));
@@ -378,7 +416,8 @@ function make_deposit_form() {
     // append form to the row entry, set up listeners
     $(this).parent().parent().append(deposit_form);
     deposit_form.find('#deposit-amount').blur(function() {
-        $(this).val(Math.ceil(100 * parseFloat($(this).val())) / 100);
+        var val = parseFloat($(this).val());
+        $(this).val(val.toFixed(2));
     });
 
     $(this).unbind().click(cancel_deposit_form);
@@ -394,92 +433,63 @@ function cancel_deposit_form() {
 
 // creates a new transaction form to allow user to edit existing information
 function make_transaction_form() {
-    var trans_form = $('#trans-form').clone();
+    // send ajax request for more information regarding the trans
+    var message = {};
 
     // hidden input field containing information
-    var repeat_info_carrier = $(this).parent().siblings('input');
+    var trans_is_repeated = $(this).parent().siblings('.trans-is-repeated').val();
+
+    var trans_form = $('#trans-form').clone();
     trans_form.attr('action', trans_form.attr('action').replace('add', 'edit'));
 
-    // stores information in the table into a map
-    var trans_info = new Object;
-    $(this).closest('tr').prev().children('td').each(function() {
-        var type = $(this).attr('type');
-        if (type === 'trans-paid-by') { // for trans-paid-by cell, use the user-id attribute
-            trans_info[type] = $(this).attr('user-id');
-        } else {
-            trans_info[type] = $(this).text();
+    var trans_info = {};
+    trans_info['session-token'] = message['session-token'] = trans_form.find('.session-token').val();
+    trans_info['trans-id'] = message['trans-id'] = $(this).val();
+    trans_info['trans-is-repeated'] = message['trans-is-repeated'] = trans_is_repeated;
+    message['action'] = 'get_transaction_ajax';
+    var request = $.post("balance.php?submission=get_transaction_ajax", message, function(return_data) {
+        var return_obj = JSON.parse(return_data);
+        if (return_obj['success'] !== '1') {
+            return;
         }
-    });
-    $(this).closest('td').find('div').each(function() {
-        var user_id = $(this).attr('user-id');
-        if (typeof user_id !== typeof undefined && user_id !== false) {
-            trans_info['user_' + $(this).attr('user-id') + '_amount'] = parseFloat($(this).text().split(': ')[1]);
+        trans_info['trans-name'] = return_obj['name'];
+        trans_info['trans-date'] = return_obj['date'];
+        trans_info['trans-note'] = return_obj['note'];
+        var is_repeated = return_obj['is_repeated'];
+        if (is_repeated) {
+            trans_info['trans-end-date'] = return_obj['end_date'];
+            trans_info['trans-interval-num'] = return_obj['repeat_interval_num'];
+            trans_info['trans-interval-unit'] = return_obj['repeat_interval_unit'];
         }
-    });
 
-    // deal with transactions that repeat. Take info stored in hidden field
-    trans_form.find('.trans-repeat-toggle').remove(); // remove the toggle and add a hidden field signaling repeat if needed
-    if (repeat_info_carrier.val() === '1') { // for repeated events
-        trans_form.append('<input type="hidden" name="trans-is-repeated">');
-        trans_form.children('.trans-start-date').children('label').text('Start Date:');
-        trans_form.children('.trans-repeat-info').each(function() {
-            $(this).css('display', 'inline');
-        });
-        trans_info['trans-is-repeated'] = '1';
-        trans_info['trans-date'] = repeat_info_carrier.attr('trans-date'); // start date
-        trans_info['trans-end-date'] = repeat_info_carrier.attr('trans-end-date');
-        trans_info['trans-interval-num'] = repeat_info_carrier.attr('trans-interval-num');
-        trans_info['trans-interval-unit'] = repeat_info_carrier.attr('trans-interval-unit');
-    } else {
-        trans_form.children('.trans-start-date').children('label').text('Date:');
-        trans_form.children('.trans-repeat-info').remove();
-    }
-
-    // find selected payer and calculate how much he's supposed to pay
-    var selected_payer = null;
-    trans_form.find('#trans-paid-by').each(function() {
-        $(this).children().each(function(index) {
-            if (typeof selected_payer === 'undefined' && index === 0) {
-                selected_payer = $(this);
-            }
-            if ($(this).val() === trans_info['trans-paid-by']) { // check if user-id of this person is same as the payer's
-                selected_payer = $(this);
-                trans_info['user_' + $(this).val() + '_amount'] = trans_info['user_' + $(this).val() + '_amount'] + parseFloat(trans_info['trans-total-amount']);
-            }
-        });
-    });
+        // deal with transactions that repeat. Take info stored in hidden field
+        trans_form.find('.trans-repeat-toggle').remove(); // remove the toggle and add a hidden field signaling repeat if needed
+        trans_form.append($('<input type="hidden" name="trans-is-repeated" value="' + is_repeated + '">'));
+        trans_form.append('<input type="hidden" name="trans-id">');
+        if (is_repeated === '1') {
+            trans_form.find('.trans-date').children('label').text('Start Date:');
+            // show hidden fields
+            trans_form.find('.trans-repeat-info').each(function() {
+                $(this).css('display', 'inline');
+            });            
+        }
     
-    // find selected unit
-    var selected_unit = null;
-    trans_form.find('#trans-interval-unit').each(function() {
-        $(this).children().each(function(index) {
-            if (typeof selected_unit === 'undefined' && index === 0) {
-                selected_unit = $(this);
-            }
-            if ($(this).val() === trans_info['trans-interval-unit']) {
-                selected_unit = $(this);
+        // set the default values of all the fields to be existing info
+        trans_form.find(':input').each(function() {
+            var field_name = $(this).attr('name');
+            if (trans_info.hasOwnProperty(field_name)) { // field should be changed
+                $(this).val(trans_info[field_name]);
             }
         });
-    });
-    trans_form.append('<input type="hidden" name="trans-id">');
-    trans_info['trans-id'] = repeat_info_carrier.attr('trans-id');
 
-    // set the default values of all the fields to be existing info
-    trans_form.find(':input').each(function() {
-        var field_name = $(this).attr('name');
-        if (trans_info.hasOwnProperty(field_name)) { // field should be changed
-            $(this).val(trans_info[field_name]);
-        }
-    });
+    }, 'html');
 
-    // append form to the row entry, set up listeners
+    // remove any previous children
+    trans_form.find('.drag-dest').children('.drag-user').remove();
+    bind_all_transaction_amount_handlers(trans_form);
+
+    // append form to the row entry
     $(this).closest('td').append(trans_form);
-    if (selected_payer !== null) {
-        selected_payer.attr('selected', 'selected');
-    }
-    if (selected_unit !== null) {
-        selected_unit.attr('selected', 'selected');
-    }
 
     $(this).unbind().click(cancel_transaction_form);
     $(this).text('Cancel');

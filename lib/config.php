@@ -45,7 +45,9 @@ $CONTROLLER_TO_ACTIONS = array(
     'register' => ['view', 'register'],
     'login' => ['view', 'login', 'logout'],
     'index' => ['view', 'alter_table', 'check_table'],
-    'balance' => ['view', 'deposit_add', 'deposit_edit', 'deposit_delete', 'transaction_add', 'transaction_edit', 'transaction_delete'],
+    'balance' => ['view', 'deposit_add', 'deposit_edit', 'deposit_delete', 
+                  'transaction_add', 'transaction_edit', 'transaction_delete', 
+                  'get_deposit_ajax', 'get_transaction_ajax'],
     'admin' => ['view', 'verify_users', 'make_admins', 'delete_users', 'register_code'],
     'error' => ['view']
 );

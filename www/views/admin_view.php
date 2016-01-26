@@ -51,7 +51,7 @@
 
 					</tbody>
 				</table>
-			<input type="hidden" name="session_token" value=<?= htmlspecialchars($user_session_token) ?>>
+			<input type="hidden" name="session-token" value=<?= htmlspecialchars($user_session_token) ?>>
 			<button type="submit" class="btn btn-default">Submit</button>
 			</div>
 		</form>
@@ -91,7 +91,7 @@
 
 					</tbody>
 				</table>
-			<input type="hidden" name="session_token" value=<?= htmlspecialchars($user_session_token) ?>>
+			<input type="hidden" name="session-token" value=<?= htmlspecialchars($user_session_token) ?>>
 			<button type="submit" class="btn btn-default">Submit</button>
 			</div>
 		</form>
@@ -130,7 +130,7 @@
 						<?php endforeach; ?>
 					</tbody>
 				</table>
-				<input type="hidden" name="session_token" value=<?= htmlspecialchars($user_session_token) ?>>
+				<input type="hidden" name="session-token" value=<?= htmlspecialchars($user_session_token) ?>>
 				<button type="submit" class="btn btn-default">Submit</button>
 			</div>
 		</form>
@@ -166,7 +166,7 @@
 						<?php endforeach; ?>
 					</tbody>
 				</table>
-				<input type="hidden" name="session_token" value=<?= htmlspecialchars($user_session_token) ?>>
+				<input type="hidden" name="session-token" value=<?= htmlspecialchars($user_session_token) ?>>
 				<button type="submit" class="btn btn-default" name="delete">Delete</button>
 				<button type="submit" class="btn btn-default" name="generate">Generate</button>
 			</div>

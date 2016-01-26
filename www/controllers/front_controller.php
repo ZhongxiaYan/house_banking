@@ -1,6 +1,5 @@
 <?php
-//hai z
-// nice locked workstation
+
 require_once dirname(__FILE__) . '/../../lib/config.php';
 require_once $PAGES['util'];
 require_once "$LIB/classes/user.php";
@@ -29,6 +28,12 @@ if (array_key_exists('submission', $_GET)) { // submitted some form, redirect to
         if (array_key_exists($key, $SESSION_LOGIN_VARS)) { // do not let $_POST set the session log in variables
             continue;
         }
+        if ((!array_key_exists('session-token', $_POST) || $_POST['session-token'] !== $_SESSION['user_session_token'])
+                                 && get_session('controller') !== 'login') { // prevent man in the middle attack by logging out
+            clear_session();
+            redirect($PAGES['login'] . '?submission=logout');
+            exit;
+        }
         $_SESSION[$key] = $value;
     }
     unset($_GET['submission']);
@@ -51,7 +56,7 @@ $status = pop_session('status');
 
 // query all the accounts
 $all_users = array();
-$active_users = array();
+$current_users = array();
 $curr_user = null;
 $view_user = null;
 
@@ -67,8 +72,8 @@ while ($user_info = $users_sql->fetch_assoc()) {
         $user_info['deleted']
     );
     $all_users[$user_info['id']] = $user;
-    if ($user->is_active) { // verified and not deleted
-        $active_users[$user_info['id']] = $user;
+    if ($user->is_verified) {
+        $current_users[$user_info['id']] = $user;
     }
 }
 
@@ -93,7 +98,7 @@ if (array_key_exists('user_id', $_SESSION) && array_key_exists('user_session_tok
 
     // check if $curr_user is still an active user
     $view_user = $curr_user;
-    if ($curr_user !== null && !$curr_user->is_active) {
+    if ($curr_user !== null && !$curr_user->is_active) { // verified and not deleted
         $status;
         if ($curr_user->is_deleted) {
             $status = 'deleted';
@@ -135,7 +140,7 @@ if (array_key_exists('user_id', $_SESSION) && array_key_exists('user_session_tok
 if (in_array($action, $CONTROLLER_TO_ACTIONS[$controller_name])) {
     require_once "$WWW/controllers/${controller_name}_controller.php";
     $class_name = ucfirst($controller_name . 'Controller');
-    $controller = new $class_name($mysqli, $all_users, $active_users, $curr_user, $view_user);
+    $controller = new $class_name($mysqli, $all_users, $current_users, $curr_user, $view_user);
 } else {
     clear_session();
     set_session('status', 'no_action');

@@ -12,7 +12,7 @@
             <button type="button" class="btn btn-primary" id="append-right">Right</button>
         </div>
     </div>
-    <table class="table table-bordered table-fixed" id="editable-table" session_token=<?= $user_session_token ?>>
+    <table class="table table-bordered table-fixed" id="editable-table" session-token=<?= $user_session_token ?>>
         <tbody>
             <?php foreach ($editable_table as $row): ?>
             <tr>

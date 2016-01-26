@@ -186,7 +186,7 @@ function send_data() {
 	send_data['after'] = curr_table_data;
 	send_data['before'] = JSON.parse(window.sessionStorage.table);
 	send_data['action'] = 'alter_table';
-	send_data['session_token'] = $('#editable-table').attr('session_token');
+	send_data['session-token'] = $('#editable-table').attr('session-token');
 	var request = $.post("index.php?submission=alter_table", send_data, function(return_data) {
 		// console.log(return_data);
 		var return_obj = JSON.parse(return_data);
@@ -272,13 +272,14 @@ function set_table_data(curr_table) {
 function check_server_data() {
 	var send_data = {
 		action : 'check_table',
-		session_token : $('#editable-table').attr('session_token')
 	};
+	send_data['session-token'] = $('#editable-table').attr('session-token');
 	if (!('user_alerted' in check_server_data)) {
 		check_server_data.user_alerted = false;
 	}
 
 	var request = $.post("index.php?submission=check_table", send_data, function(return_data) {
+		// console.log(return_data);
 		var return_obj = JSON.parse(return_data);
 		var reference_table = return_obj['reference'];
 		var curr_saved_table = JSON.parse(window.sessionStorage.table);

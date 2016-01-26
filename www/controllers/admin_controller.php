@@ -3,17 +3,17 @@
 class AdminController {
 
     private $all_users;
-    private $active_users;
+    private $current_users;
     private $curr_user;
     private $db;
     private $status;
     private $session;
     public $page;
 
-    public function __construct($db, $all_users, $active_users, $curr_user, $view_user) {
+    public function __construct($db, $all_users, $current_users, $curr_user, $view_user) {
         $this->db = $db;
         $this->all_users = $all_users;
-        $this->active_users = $active_users;
+        $this->current_users = $current_users;
         $this->curr_user = $curr_user;
         $this->view_user = $view_user;
         $this->page = 'index.php';
@@ -99,20 +99,18 @@ class AdminController {
             echo 'Execution failed: (' . $stmt->errno . ') ' . $stmt->error;
         }
 
-        // change $all_users and $active_users to reflect change
+        // change $all_users and $current_users to reflect change
         $all_users = $this->all_users;
-        $active_users = $this->active_users;
+        $current_users = $this->current_users;
         foreach ($changed_ids as $id) {
             $user = $all_users[$id];
             $user->{"is_$column"} = 1;
-            if ($column === 'deleted') { // remove from active if delete
-                unset($active_users[$id]);
-            } else if ($column === 'verified') { // add to active if verify
-                $active_users[$id] = $user;
+            if ($column === 'verified') { // add to active if verify
+                $current_users[$id] = $user;
             }
         }
         $this->all_users = $all_users;
-        $this->active_users = $active_users;
+        $this->current_users = $current_users;
     }
 
     private function verify_users() {

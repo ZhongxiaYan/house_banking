@@ -3,7 +3,7 @@
 class BalanceController {
 
     private $all_users;
-    private $active_users;
+    private $current_users;
     private $curr_user;
     private $view_user;
     private $db;
@@ -11,10 +11,10 @@ class BalanceController {
     private $session;
     public $page;
 
-    public function __construct($db, $all_users, $active_users, $curr_user, $view_user) {
+    public function __construct($db, $all_users, $current_users, $curr_user, $view_user) {
         $this->db = $db;
         $this->all_users = $all_users;
-        $this->active_users = $active_users;
+        $this->current_users = $current_users;
         $this->curr_user = $curr_user;
         $this->view_user = $view_user;
         $this->page = 'balance.php';
@@ -35,7 +35,7 @@ class BalanceController {
         $current_date = date('Y-m-d');
         $logged_in = 1;
         $all_users = $this->all_users;
-        $active_users = $this->active_users;
+        $current_users = $this->current_users;
         $curr_user = $this->curr_user;
         $view_user = $this->view_user;
         $user_session_token = $this->session['user_session_token'];
@@ -46,6 +46,15 @@ class BalanceController {
         require_once "$LIB/classes/transaction_table.php";
         require_once "$WWW/controllers/calculate_balance_table.php";
         require_once "$WWW/views/balance_view.php";
+    }
+
+    private function get_user_amounts($session) {
+        $user_amounts = array();
+        foreach ($this->current_users as $id => $user) {
+            $key = "user_${id}_amount";
+            $user_amounts[$key] = $session[$key];
+        }
+        return $user_amounts;
     }
 
     private function get_deposit_table() {
@@ -68,6 +77,19 @@ class BalanceController {
 
         clear_session();
         $this->view();
+    }
+
+    private function get_deposit_ajax() {
+        $table = $this->get_deposit_table();
+        $session = $this->session;
+        $deposit_id = $session['deposit-id'];
+
+        $deposit = $table->get_deposit($deposit_id);
+        $deposit['date'] = date('Y-m-d', strtotime($deposit['action_time']));
+        $deposit['success'] = '1';
+        
+        clear_session();
+        echo json_encode($deposit, JSON_FORCE_OBJECT);
     }
 
     private function deposit_edit() {
@@ -103,17 +125,24 @@ class BalanceController {
         return new TransactionTable($this->db);
     }
 
-    private function get_user_amounts(&$user_amounts) {
-        $paid_by_id = 0;
+    private function get_transaction_ajax() {
+        $table = $this->get_transaction_table();
         $session = $this->session;
-        foreach ($this->active_users as $id => $user) { // TODO figure out what users
-            $key = "user_${id}_amount";
-            if ($id == $session['trans-paid-by']) {
-                $paid_by_id = $id;
-            }
-            $user_amounts[$key] = $session[$key];
+        $trans_id = $session['trans-id'];
+        $is_repeated = array_key_exists('trans-is-repeated', $session) && $session['trans-is-repeated'] === '1';
+
+        $transaction = $table->get_transaction($trans_id, $is_repeated);
+        $transaction['is_repeated'] = $is_repeated ? '1' : '0';
+        if ($is_repeated) {
+            $transaction['date'] = date('Y-m-d', strtotime($transaction['start_date']));
+            $transaction['end_date'] = date('Y-m-d', strtotime($transaction['end_date']));
+        } else {            
+            $transaction['date'] = date('Y-m-d', strtotime($transaction['action_time']));
         }
-        return $paid_by_id;
+        $transaction['success'] = '1';
+        
+        clear_session();
+        echo json_encode($transaction, JSON_FORCE_OBJECT);
     }
 
     private function transaction_add() {
@@ -121,13 +150,14 @@ class BalanceController {
         $session = $this->session;
 
         $name = $session['trans-name'];
+
         $is_repeated = array_key_exists('trans-is-repeated', $session) && $session['trans-is-repeated'] === '1';
-        $amount = $session['trans-total-amount'];
+
         $note = $session['trans-note'];
         $maker_id = $this->curr_user->id;
 
-        $users_amounts = array();
-        $paid_by_id = $this->get_user_amounts($users_amounts);
+        
+        $user_amounts = $this->get_user_amounts($session);
 
         if ($is_repeated) {
             $start_date = $session['trans-date'];
@@ -135,11 +165,11 @@ class BalanceController {
             $repeat_interval_unit = $session['trans-interval-unit'];
             $repeat_interval_num = $session['trans-interval-num'];
 
-            $table->add_repeated_transaction($name, $amount, $paid_by_id, $users_amounts, $start_date, $end_date, $repeat_interval_num, $repeat_interval_unit, $note, $maker_id);
+            $table->add_repeated_transaction($name, $user_amounts, $start_date, $end_date, $repeat_interval_num, $repeat_interval_unit, $note, $maker_id);
         } else {
             $datetime = $session['trans-date'];
 
-            $table->add_single_transaction($name, $amount, $paid_by_id, $users_amounts, $datetime, $note, $maker_id);
+            $table->add_single_transaction($name, $user_amounts, $datetime, $note, $maker_id);
         }
 
         clear_session();
@@ -153,12 +183,10 @@ class BalanceController {
         $trans_id = $session['trans-id'];
         $name = $session['trans-name'];
         $is_repeated = array_key_exists('trans-is-repeated', $session) && $session['trans-is-repeated'] === '1';
-        $amount = $session['trans-total-amount'];
         $note = $session['trans-note'];
         $edittor_id = $this->curr_user->id;
 
-        $users_amounts = array();
-        $paid_by_id = $this->get_user_amounts($users_amounts);
+        $user_amounts = $this->get_user_amounts($session);
 
         if ($is_repeated) {
             $start_date = $session['trans-date'];
@@ -166,11 +194,11 @@ class BalanceController {
             $repeat_interval_unit = $session['trans-interval-unit'];
             $repeat_interval_num = $session['trans-interval-num'];
 
-            $table->edit_repeated_transaction($trans_id, $name, $amount, $paid_by_id, $users_amounts, $start_date, $end_date, $repeat_interval_num, $repeat_interval_unit, $note, $edittor_id); // TODO need to edit all users or just the ones given
+            $table->edit_repeated_transaction($trans_id, $name, $user_amounts, $start_date, $end_date, $repeat_interval_num, $repeat_interval_unit, $note, $edittor_id); // TODO need to edit all users or just the ones given
         } else {
             $datetime = $session['trans-date'];
 
-            $table->edit_single_transaction($trans_id, $name, $amount, $paid_by_id, $users_amounts, $datetime, $note, $edittor_id);
+            $table->edit_single_transaction($trans_id, $name, $user_amounts, $datetime, $note, $edittor_id);
         }
 
         clear_session();
@@ -193,26 +221,6 @@ class BalanceController {
         clear_session();
         $this->view();        
     }
-
-    //         case 'transaction_edit':
-    //             $user_amounts = array();
-    //             $paid_by_id = get_user_amounts($user_amounts);
-    //             if (array_key_exists('trans-repeat', $_SESSION) && $_SESSION['trans-repeat'] === 'yes') {
-    //                 $view_user->edit_repeated_transaction($_SESSION['trans-id'], $_SESSION['trans-name'], 
-    //                     $_SESSION['trans-total-amount'], $paid_by_id, $user_amounts, $_SESSION['trans-date'],
-    //                     $_SESSION['trans-end-date'], $_SESSION['trans-interval-num'], $_SESSION['trans-interval-unit'], $_SESSION['trans-note'], $curr_user->id);
-    //             } else {
-    //                 $view_user->edit_single_transaction($_SESSION['trans-id'], $_SESSION['trans-name'], 
-    //                     $_SESSION['trans-total-amount'], $paid_by_id, $user_amounts, $_SESSION['trans-date'], $_SESSION['trans-note'], $curr_user->id);             
-    //             }
-    //             break;
-    //         case 'transaction_delete':
-    //             if ($_SESSION['trans-type'] === 's') {
-    //                 $view_user->delete_single_transaction($_SESSION['trans-id']);
-    //             } else {
-    //                 $view_user->delete_repeated_transaction($_SESSION['trans-id']);
-    //             }
-    //             break;
 }
 
 ?>

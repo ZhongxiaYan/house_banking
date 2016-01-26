@@ -131,7 +131,7 @@ require_once $PAGES['util'];
                     <label>Note:</label>
                     <textarea class="form-control" rows="2" name="deposit-note"></textarea>
                 </div>
-                <input type="hidden" name="session_token" value=<?= e($user_session_token) ?>>
+                <input type="hidden" class="session-token" name="session-token" value=<?= e($user_session_token) ?>>
                 <button type="submit" class="btn btn-default">Submit</button>
             </form>
             <h4>Transaction:</h4>
@@ -144,16 +144,16 @@ require_once $PAGES['util'];
                     <label>Repeat:</label>
                     <input type="checkbox" name="trans-is-repeated" value="1">
                 </div>
-                <div class="form-group" required>
+                <div class="form-group trans-date" required>
                     <label>Date:</label>
-                    <input type="date" class="form-control" name="trans-date" max=<?= e($current_date) ?> value=<?= e($current_date) ?> id="trans-start-date">
+                    <input type="date" class="form-control" name="trans-date" value=<?= e($current_date) ?>>
                 </div>
                 <div class="form-group trans-repeat-info" style="display:none">
                     <label>Stop Date:</label>
-                    <input type="date" class="form-control" name="trans-end-date" min=<?= e($current_date) ?> value=<?= e($current_date) ?> id="trans-end-date">
+                    <input type="date" class="form-control trans-end-date" name="trans-end-date" value=<?= e($current_date) ?>>
                     <label>Interval:</label>
-                    <input type="number" class="form-control input-sm" step="1" min="1" name="trans-interval-num" id="trans-interval-num" value="1">
-                    <select class="form-control" name="trans-interval-unit" id="trans-interval-unit">
+                    <input type="number" class="form-control input-sm trans-interval-num" step="1" min="1" name="trans-interval-num" value="1">
+                    <select class="form-control trans-interval-unit" name="trans-interval-unit">
                         <option value="d">Day</option>
                         <option value="m">Month</option>
                         <option value="y">Year</option>
@@ -167,7 +167,7 @@ require_once $PAGES['util'];
                 <br><br>
                 <label>Drag these users if needed:</label>
 
-                <?php foreach ($active_users as $id => $user): ?>
+                <?php foreach ($current_users as $id => $user): ?>
 
                 <div class=<?= e("'form-group drag-src user-$id'") ?> user-id=<?= e($id) ?> draggable="true" origin="source">
                     <label><?= e($user->name) ?></label>
@@ -206,7 +206,7 @@ require_once $PAGES['util'];
                 <label>Net amounts owed:</label>
                 <br>
 
-                <?php foreach ($active_users as $id => $user): ?>
+                <?php foreach ($current_users as $id => $user): ?>
 
                 <div class="form-group user-final-amt">
                     <label><?= e("$user->name:") ?></label>
@@ -217,7 +217,7 @@ require_once $PAGES['util'];
 
                 <br><br>
 
-                <input type="hidden" name="session_token" value=<?= e($user_session_token) ?>>
+                <input type="hidden" class="session-token" name="session-token" value=<?= e($user_session_token) ?>>
                 <button type="submit" class="btn btn-default">Submit</button>
             </form>
 

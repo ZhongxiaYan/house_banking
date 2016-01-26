@@ -3,17 +3,17 @@
 class IndexController {
 
     private $all_users;
-    private $active_users;
+    private $current_users;
     private $curr_user;
     private $db;
     private $status;
     private $session;
     public $page;
 
-    public function __construct($db, $all_users, $active_users, $curr_user, $view_user) {
+    public function __construct($db, $all_users, $current_users, $curr_user, $view_user) {
         $this->db = $db;
         $this->all_users = $all_users;
-        $this->active_users = $active_users;
+        $this->current_users = $current_users;
         $this->curr_user = $curr_user;
         $this->view_user = $view_user;
         $this->page = 'index.php';
@@ -166,8 +166,8 @@ class IndexController {
         $curr_user = $this->curr_user;
         $view_user = $this->view_user;
         $all_users = $this->all_users;
-        $active_users = $this->active_users;
-        ksort($active_users);
+        $current_users = $this->current_users;
+        ksort($current_users);
 
         $cell_map = $this->get_cells();
         $rows = 0;

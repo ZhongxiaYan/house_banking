@@ -11,6 +11,18 @@ class DepositTable {
         $this->table = $CONFIG['db']['tables']['deposits'];
     }
 
+    public function get_deposit($deposit_id) {
+        $query = sprintf('SELECT name, amount, action_time, note FROM %s WHERE id=?', $this->table);
+        $stmt = $this->db->prepare($query);
+        if (!$stmt->bind_param('i', $deposit_id)) {
+            echo 'Binding parameter failed: (' . $stmt->errno . ') ' . $stmt->error;
+        }
+        if (!$stmt->execute()) {
+            echo 'Execution failed: (' . $stmt->errno . ') ' . $stmt->error;
+        }
+        return $stmt->get_result()->fetch_assoc();
+    }
+
     /**
      *  @param $depositor_id   the id of the depositor
      *  @param $all            get all deposits if 1, just the specified depositor's if 0
@@ -28,21 +40,14 @@ class DepositTable {
     /**
      *  @param $depositor_id  null if want all deposits
      */
-    public function get_deposits_array(&$deposit_array, $depositor_id) {
+    public function get_deposits_array($depositor_id) {
         $deposit_array = array();
         $deposits = $this->get_deposits($depositor_id);
-        $balance = 0.0; // sum up the cost for every transaction then subtract as we go
         while ($row = $deposits->fetch_assoc()) {
             $row['type'] = 'deposit';
-            if ($depositor_id === null) {
-                $row['paid_by_id'] = $row['user_id'];
-            } else {
-                $row['paid_by_id'] = $depositor_id;
-            }
             $deposit_array[] = $row;
-            $balance += floatval($row['amount']);
         }
-        return $balance;
+        return $deposit_array;
     }
 
     /** 

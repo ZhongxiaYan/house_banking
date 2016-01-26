@@ -8,10 +8,9 @@
                     <th>Type</th>
                     <th>Name</th>
                     <th>Amount</th>
-                    <th>Paid by</th>
                     <?php
                     
-                    foreach ($active_users as $id => $user): ?>
+                    foreach ($current_users as $id => $user): ?>
                     
                     <th><?= $user->name ?></th>
                     
@@ -28,13 +27,12 @@
                     <td><?= e($row['type']) ?></td>
                     <td><?= e($row['name']) ?></td>
                     <td class=<?= e($row['amount_color']) ?>><?= e($row['amount']) ?></td>
-                    <td class=<?= e($row['amount_color']) ?>><?= e($row['paid_by']) ?></td>
 
-                    <?php foreach ($active_users as $id => $user): 
-                    $user_x_amount = "user_${id}_amount"
+                    <?php foreach ($current_users as $id => $user): 
+                    $user_x_amount_string = "user_${id}_amount"
                     ?>
 
-                    <td class=<?= e($row["${user_x_amount}_color"]) ?>><?= $row[$user_x_amount] ?></td>
+                    <td class=<?= e($row["${user_x_amount_string}_color"]) ?>><?= $row[$user_x_amount_string] ?></td>
 
                     <?php endforeach; ?>
                     
