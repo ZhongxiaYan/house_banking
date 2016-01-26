@@ -60,5 +60,9 @@ foreach ($CONTROLLER_TO_ACTIONS as $key => $value) { // add the links from $CONT
     $PAGES[$key] = "$key.php";
 }
 
+$NO_LOGIN_PAGES = array(
+    'login',
+    'register'
+);
 
 ?>

@@ -26,6 +26,7 @@ class RegisterController {
 
     // return 1 if correct register code
     private function check_valid_register_code($register_code, $register_code_table) {
+
         $query = sprintf('SELECT * FROM %s WHERE code=?;', $register_code_table);
         $stmt = $this->db->prepare($query);
         if (!$stmt->bind_param('s', $register_code)) {
@@ -98,6 +99,7 @@ class RegisterController {
                 $this->db->query($query);
 
                 set_session('status', 'just_registered');
+                exit;
                 redirect($PAGES['login']);
                 exit;
             } else {

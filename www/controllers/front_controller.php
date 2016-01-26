@@ -29,7 +29,7 @@ if (array_key_exists('submission', $_GET)) { // submitted some form, redirect to
             continue;
         }
         if ((!array_key_exists('session-token', $_POST) || $_POST['session-token'] !== $_SESSION['user_session_token'])
-                                 && get_session('controller') !== 'login') { // prevent man in the middle attack by logging out
+                                 && !in_array(get_session('controller'), $NO_LOGIN_PAGES)) { // prevent man in the middle attack by logging out
             clear_session();
             redirect($PAGES['login'] . '?submission=logout');
             exit;
