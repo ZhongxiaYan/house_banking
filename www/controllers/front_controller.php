@@ -64,7 +64,8 @@ $users_sql = $mysqli->query(sprintf('SELECT * FROM %s;', $CONFIG['db']['tables']
 while ($user_info = $users_sql->fetch_assoc()) {
     $user = new User(
         $user_info['id'], 
-        sprintf('%s %s', $user_info['first_name'], $user_info['last_name']),
+        $user_info['first_name'],
+        $user_info['last_name'],
         $user_info['email'],
         $user_info['pass_salt_hash'],
         $user_info['verified'],

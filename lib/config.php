@@ -49,6 +49,7 @@ $CONTROLLER_TO_ACTIONS = array(
                   'transaction_add', 'transaction_edit', 'transaction_delete', 
                   'get_deposit_ajax', 'get_transaction_ajax'],
     'admin' => ['view', 'verify_users', 'make_admins', 'delete_users', 'register_code'],
+    'changeinfo' => ['view', 'change'],
     'error' => ['view']
 );
 

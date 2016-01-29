@@ -36,3 +36,8 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Others #
+##########
+.tags
+.tags_sorted_by_file

@@ -46,6 +46,7 @@ require_once $PAGES['util'];
             
             <?php endif; ?>
 
+                <li><a href="changeinfo.php">Edit Info</a></li>
                 <li><a href="login.php?submission=logout">Logout</a></li>
             </ul>
         <?php else: ?>
