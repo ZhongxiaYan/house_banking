@@ -151,8 +151,8 @@ class IndexController {
     }
 
     private function view() {
-        global $WWW;
         global $LIB;
+        global $WWW;
         global $PAGES;
         global $CONFIG;
 
@@ -175,8 +175,8 @@ class IndexController {
         $this->get_dimensions($cell_map, $rows, $columns); // get the actual dimensions
         $editable_table = $this->convert_cells_to_table($cell_map, $rows, $columns);
         
-        require_once "$LIB/classes/deposit_table.php";
-        require_once "$LIB/classes/transaction_table.php";        
+        require_once "$WWW/models/deposit_table.php";
+        require_once "$WWW/models/transaction_table.php";        
         require_once "$WWW/controllers/calculate_house_table.php";
         require_once "$WWW/views/index_view.php";
     }

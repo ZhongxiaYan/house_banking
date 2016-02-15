@@ -42,8 +42,8 @@ class BalanceController {
         $db = $this->db;
 
         require_once "$LIB/util.php";
-        require_once "$LIB/classes/deposit_table.php";
-        require_once "$LIB/classes/transaction_table.php";
+        require_once "$WWW/models/deposit_table.php";
+        require_once "$WWW/models/transaction_table.php";
         require_once "$WWW/controllers/calculate_balance_table.php";
         require_once "$WWW/views/balance_view.php";
     }

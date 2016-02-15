@@ -2,7 +2,7 @@
 
 require_once dirname(__FILE__) . '/../../lib/config.php';
 require_once $PAGES['util'];
-require_once "$LIB/classes/user.php";
+require_once "$WWW/models/user.php";
 
 // general set up
 date_default_timezone_set('America/Los_Angeles');
