@@ -23,28 +23,31 @@ require_once $PAGES['util'];
                 <li class=<?= $page === 'index.php' ? 'active' : ''; ?>><a href="index.php">Home</a></li>
                 <li class=<?= $page === 'balance.php' ? 'active' : ''; ?>><a href="balance.php">View Balance</a></li>
             </ul>
+            
             <ul class="nav navbar-nav navbar-right">
-
-            <?php if ($curr_user->is_admin): ?>
+            
+                <?php if ($page === 'balance.php'): ?>
 
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">View as <?= e($view_user->name); ?><span class="caret"></span></a>
                     <ul class="dropdown-menu">
                     
                     <?php foreach ($all_users as $id => $user): ?>
-                        <li><a href=<?= '?user=' . $id ?>><?= $user->name . ($user->is_active ? '' : ' (inactive)') ?></a></li> 
+                        <li><a href=<?= e('?user=' . $id) ?>><?= e($user->name . ($user->is_active ? '' : ' (inactive)')) ?></a></li> 
                     <?php endforeach; ?>
                     
                     </ul>
                 </li>
+                
+                <?php endif; ?>
+
+                <?php if ($curr_user->is_admin): ?>
+                
                 <li class=<?= $page === 'admin.php' ? 'active' : '' ?>><a href="admin.php">Manage Users</a></li>
-                <p class="navbar-text">Logged in as <?= e($curr_user->name); ?> (admin)</p>
-
-            <?php else: ?>
-
-                <p class="navbar-text">Logged in as <?= e($curr_user->name); ?></p>
-            
-            <?php endif; ?>
+                
+                <?php endif; ?>
+                
+                <p class="navbar-text">Logged in as <?= e($curr_user->name . ($curr_user->is_admin ? ' (admin)' : '')) ?></p>
 
                 <li><a href="changeinfo.php">Edit Info</a></li>
                 <li><a href="login.php?submission=logout">Logout</a></li>

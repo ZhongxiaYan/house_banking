@@ -41,6 +41,51 @@ class BalanceController {
         $user_session_token = $this->session['user_session_token'];
         $db = $this->db;
 
+        $status = $this->status;
+        $color = null;
+        $message = null;
+        switch ($status) {
+            case null:
+                break;
+            case 'just_logged_in':
+                break;
+            case 'invalid_view_id':
+                $color = 'red';
+                $message = 'There is no person with that view ID.';
+                break;
+            case 'permission_denied':
+                $color = 'red';
+                $message = 'You don\'t have the permission to do that';
+                break;
+            case 'add_deposit_success':
+                $color = 'green';
+                $message = 'Successfully recorded deposit.';
+                break;
+            case 'edit_deposit_success':
+                $color = 'green';
+                $message = 'Successfully edited deposit.';
+                break;
+            case 'delete_deposit_success':
+                $color = 'green';
+                $message = 'Successfully deleted deposit.';
+                break;
+            case 'add_transaction_success':
+                $color = 'green';
+                $message = 'Successfully recorded transaction.';
+                break;
+            case 'edit_transaction_success':
+                $color = 'green';
+                $message = 'Successfully edited transaction.';
+                break;
+            case 'delete_transaction_success':
+                $color = 'green';
+                $message = 'Successfully deleted transaction.';
+                break;
+            default:
+                $color = 'red';
+                $message = 'Unknown status code ' . htmlspecialchars($status);
+        }
+
         require_once "$LIB/util.php";
         require_once "$SRC/models/deposit_table.php";
         require_once "$SRC/models/transaction_table.php";
@@ -64,18 +109,27 @@ class BalanceController {
     }
 
     private function deposit_add() {
+        $curr_user = $this->curr_user;
+        $view_user = $this->view_user;
+        if (!$curr_user->is_admin && $curr_user->id !== $view_user->id) {
+            $this->status = 'permission_denied';
+            $this->view();
+            return;
+        }
+
         $table = $this->get_deposit_table();
         $session = $this->session;
 
-        $depositor_id = $this->view_user->id;
+        $depositor_id = $view_user->id;
         $name = $session['deposit-name'];
         $amount = $session['deposit-amount'];
         $datetime = $session['deposit-date'];
         $note = $session['deposit-note'];
-        $adder_id = $this->curr_user->id;
+        $adder_id = $curr_user->id;
         $table->add_deposit($depositor_id, $name, $amount, $datetime, $note, $adder_id);
 
         clear_session();
+        $this->status = 'add_deposit_success';
         $this->view();
     }
 
@@ -93,6 +147,13 @@ class BalanceController {
     }
 
     private function deposit_edit() {
+        $curr_user = $this->curr_user;
+        $view_user = $this->view_user;
+        if (!$curr_user->is_admin && $curr_user->id !== $view_user->id) {
+            $this->status = 'permission_denied';
+            $this->view();
+            return;
+        }
         $table = $this->get_deposit_table();
         $session = $this->session;
 
@@ -101,10 +162,11 @@ class BalanceController {
         $amount = $session['deposit-amount'];
         $datetime = $session['deposit-date'];
         $note = $session['deposit-note'];
-        $edittor_id = $this->curr_user->id;
+        $edittor_id = $curr_user->id;
         $table->edit_deposit($deposit_id, $name, $amount, $datetime, $note, $edittor_id);
 
         clear_session();
+        $this->status = 'edit_deposit_success';
         $this->view();
     }
 
@@ -116,6 +178,7 @@ class BalanceController {
         $table->delete_deposit($deposit_id);
 
         clear_session();
+        $this->status = 'delete_deposit_success';
         $this->view();
     }
 
@@ -173,6 +236,7 @@ class BalanceController {
         }
 
         clear_session();
+        $this->status = 'add_transaction_success';
         $this->view();        
     }
 
@@ -202,6 +266,7 @@ class BalanceController {
         }
 
         clear_session();
+        $this->status = 'edit_transaction_success';
         $this->view();        
     }
 
@@ -219,6 +284,7 @@ class BalanceController {
         }
 
         clear_session();
+        $this->status = 'delete_transaction_success';
         $this->view();        
     }
 }

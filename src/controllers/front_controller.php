@@ -99,7 +99,7 @@ if (array_key_exists('user_id', $_SESSION) && array_key_exists('user_session_tok
 
     // check if $curr_user is still an active user
     $view_user = $curr_user;
-    if ($curr_user !== null && !$curr_user->is_active) { // verified and not deleted
+    if ($curr_user !== null && !$curr_user->is_active) { // not verified or deleted
         $status;
         if ($curr_user->is_deleted) {
             $status = 'deleted';
@@ -116,8 +116,13 @@ if (array_key_exists('user_id', $_SESSION) && array_key_exists('user_session_tok
         }
         $curr_user = null;
     } else if ($curr_user !== null) {
-        if ($curr_user->is_admin && array_key_exists('user', $_GET)) {
-            $view_user = $all_users[$_GET['user']];
+        if (array_key_exists('user', $_GET)) {
+            $view_user_id = $_GET['user'];
+            if (array_key_exists($view_user_id, $all_users)) {
+                $view_user = $all_users[$view_user_id];
+            } else {
+                set_session('status', 'invalid_view_id');
+            }
         }
         // nonadmins can't visit admin.php
         if (!$curr_user->is_admin && $controller_name === 'admin') {

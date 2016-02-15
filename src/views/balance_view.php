@@ -112,6 +112,7 @@ require_once $PAGES['util'];
             require_once 'navbar.php';
         ?>
         <div id="main">
+            <div style=<?= "color:$color" ?>><?= htmlspecialchars($message) ?></div>
             <h1>Create New:</h1>
             <h4>Deposit:</h4>
             <form class="form-inline" role="form" action=<?= 'balance.php?submission=deposit_add&user=' . $view_user->id ?> method="post" id="deposit-form">
