@@ -111,7 +111,7 @@ class RegisterController {
     }
 
     private function view() {
-        global $WWW;
+        global $SRC;
         global $PAGES;
 
         if ($this->curr_user !== null) { // redirect to balance automatically if logged in
@@ -136,7 +136,7 @@ class RegisterController {
             default:
                 $message = 'Unknown status code ' . htmlspecialchars($status);
         }
-        require_once "$WWW/views/register_view.php";
+        require_once "$SRC/views/register_view.php";
     }
 }
 

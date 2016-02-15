@@ -3,7 +3,7 @@
 	<head>
 		<?php
 
-        require_once "$WWW/views/head_header.php";
+        require_once "$SRC/views/head_header.php";
 
         ?>
 		<script src="js/admin.js"></script>

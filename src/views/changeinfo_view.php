@@ -2,7 +2,7 @@
 <html>
     <head>
         <?php
-            require_once "$WWW/views/head_header.php";
+            require_once "$SRC/views/head_header.php";
         ?>
         <script src="js/changeinfo.js"></script>
         <style>
@@ -13,7 +13,7 @@
     </head>
     <body>
         <?php
-            require_once "$WWW/views/navbar.php";
+            require_once "$SRC/views/navbar.php";
         ?>
         <div id="main">
             <div style=<?= "color:$color" ?>><?= htmlspecialchars($message) ?></div>

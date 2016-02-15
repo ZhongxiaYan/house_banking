@@ -26,7 +26,7 @@ class AdminController {
     }
 
     public function view() {
-        global $WWW;
+        global $SRC;
         global $PAGES;
         global $CONFIG;
 
@@ -60,7 +60,7 @@ class AdminController {
             default:
                 $message = 'Unknown status code ' . htmlspecialchars($status);
         }
-        require_once "$WWW/views/admin_view.php";
+        require_once "$SRC/views/admin_view.php";
     }
 
     private function get_changed_ids($session) {

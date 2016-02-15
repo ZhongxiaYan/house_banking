@@ -3,7 +3,7 @@
     <head>
         <?php
 
-        require_once "$WWW/views/head_header.php";
+        require_once "$SRC/views/head_header.php";
 
         ?>
         <script src="js/index.js"></script>
@@ -68,8 +68,8 @@
 
             require_once "$LIB/util.php";
 
-            require_once "$WWW/views/editable_table_view.php";
-            require_once "$WWW/views/house_table_view.php";
+            require_once "$SRC/views/editable_table_view.php";
+            require_once "$SRC/views/house_table_view.php";
                     
             ?>
             

@@ -27,7 +27,7 @@ class BalanceController {
     }
 
     private function view() {
-        global $WWW;
+        global $SRC;
         global $LIB;
         global $PAGES;
 
@@ -42,10 +42,10 @@ class BalanceController {
         $db = $this->db;
 
         require_once "$LIB/util.php";
-        require_once "$WWW/models/deposit_table.php";
-        require_once "$WWW/models/transaction_table.php";
-        require_once "$WWW/controllers/calculate_balance_table.php";
-        require_once "$WWW/views/balance_view.php";
+        require_once "$SRC/models/deposit_table.php";
+        require_once "$SRC/models/transaction_table.php";
+        require_once "$SRC/views/calculate_balance_table.php";
+        require_once "$SRC/views/balance_view.php";
     }
 
     private function get_user_amounts($session) {
@@ -58,8 +58,8 @@ class BalanceController {
     }
 
     private function get_deposit_table() {
-        global $LIB;
-        require_once "$LIB/classes/deposit_table.php";
+        global $SRC;
+        require_once "$SRC/models/deposit_table.php";
         return new DepositTable($this->db);
     }
 
@@ -120,8 +120,8 @@ class BalanceController {
     }
 
     private function get_transaction_table() {
-        global $LIB;
-        require_once "$LIB/classes/transaction_table.php";
+        global $SRC;
+        require_once "$SRC/models/transaction_table.php";
         return new TransactionTable($this->db);
     }
 

@@ -2,7 +2,7 @@
 
 require_once dirname(__FILE__) . '/../../lib/config.php';
 require_once $PAGES['util'];
-require_once "$WWW/models/user.php";
+require_once "$SRC/models/user.php";
 
 // general set up
 date_default_timezone_set('America/Los_Angeles');
@@ -139,7 +139,7 @@ if (array_key_exists('user_id', $_SESSION) && array_key_exists('user_session_tok
 }
 
 if (in_array($action, $CONTROLLER_TO_ACTIONS[$controller_name])) {
-    require_once "$WWW/controllers/${controller_name}_controller.php";
+    require_once "$SRC/controllers/${controller_name}_controller.php";
     $class_name = ucfirst($controller_name . 'Controller');
     $controller = new $class_name($mysqli, $all_users, $current_users, $curr_user, $view_user);
 } else {

@@ -152,7 +152,7 @@ class IndexController {
 
     private function view() {
         global $LIB;
-        global $WWW;
+        global $SRC;
         global $PAGES;
         global $CONFIG;
 
@@ -175,10 +175,10 @@ class IndexController {
         $this->get_dimensions($cell_map, $rows, $columns); // get the actual dimensions
         $editable_table = $this->convert_cells_to_table($cell_map, $rows, $columns);
         
-        require_once "$WWW/models/deposit_table.php";
-        require_once "$WWW/models/transaction_table.php";        
-        require_once "$WWW/controllers/calculate_house_table.php";
-        require_once "$WWW/views/index_view.php";
+        require_once "$SRC/models/deposit_table.php";
+        require_once "$SRC/models/transaction_table.php";        
+        require_once "$SRC/views/calculate_house_table.php";
+        require_once "$SRC/views/index_view.php";
     }
 
     /**

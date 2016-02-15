@@ -18,7 +18,7 @@ class ErrorController {
 	}
 
 	public function view() {
-		global $WWW;
+		global $SRC;
 		global $LIB;
 		global $PAGES;
 
@@ -36,7 +36,7 @@ class ErrorController {
 		}
 		session_unset();
 
-		require_once "$WWW/views/error_view.php";
+		require_once "$SRC/views/error_view.php";
 	}
 }
 

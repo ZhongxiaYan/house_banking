@@ -56,7 +56,7 @@ class LoginController {
     }
 
     public function view() {
-        global $WWW;
+        global $SRC;
         global $PAGES;
 
         if ($this->curr_user !== null) { // redirect to balance automatically if logged in
@@ -100,7 +100,7 @@ class LoginController {
                 $color = 'red';
                 $message = 'Unknown status code ' . htmlspecialchars($status);
         }
-        require_once "$WWW/views/login_view.php";
+        require_once "$SRC/views/login_view.php";
     }
 }
 

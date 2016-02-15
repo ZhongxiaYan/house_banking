@@ -3,7 +3,7 @@
     <head>
         <?php
             require_once $PAGES['util'];
-            require_once "$WWW/views/head_header.php";
+            require_once "$SRC/views/head_header.php";
         ?>
         <style>
             #main {
@@ -13,7 +13,7 @@
     </head>
     <body>
         <?php
-            require_once "$WWW/views/navbar.php";
+            require_once "$SRC/views/navbar.php";
         ?>
         <div id="main">
             <div style=<?= "color:$color" ?>><?= htmlspecialchars($message) ?></div>

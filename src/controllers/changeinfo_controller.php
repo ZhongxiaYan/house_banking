@@ -26,7 +26,7 @@ class ChangeinfoController {
     }
 
     private function view() {
-        global $WWW;
+        global $SRC;
         global $PAGES;
         $curr_user = $this->curr_user;
         $view_user = $this->view_user;
@@ -53,7 +53,7 @@ class ChangeinfoController {
                 $message = 'Unknown error occured';
                 $color = 'red';
         }
-        require_once "$WWW/views/changeinfo_view.php";
+        require_once "$SRC/views/changeinfo_view.php";
     }
 
     private function change() {

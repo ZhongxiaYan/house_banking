@@ -37,7 +37,7 @@ $SESSION_LOGIN_VARS = array(
 );
 
 $ROOT_DIR = __DIR__ . '/../';
-$WWW = "$ROOT_DIR/www";
+$SRC = "$ROOT_DIR/src";
 $LIB = "$ROOT_DIR/lib";
 
 // map each controller to its possible actions
@@ -54,7 +54,7 @@ $CONTROLLER_TO_ACTIONS = array(
 );
 
 $PAGES = array(
-    'front' => "$WWW/controllers/front_controller.php",
+    'front' => "$SRC/controllers/front_controller.php",
     'util' => "$LIB/util.php"
 );
 foreach ($CONTROLLER_TO_ACTIONS as $key => $value) { // add the links from $CONTROLLER_TO_ACTIONS
