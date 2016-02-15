@@ -21,7 +21,8 @@ while ($i-- > 0) {
     $row['date'] = date('Y-m-d', strtotime($row['action_time']));
     if ($is_deposit) {
         $row['class'] = 'deposit';
-        $row['amount'] = number_format($row['amount'], 2);
+        $total_amount = $row['amount'];
+        $row['amount'] = number_format($total_amount, 2);
         $row['amount_color'] = ($row['amount'] < 0) ? 'red' : 'green';
         foreach ($current_users as $id => $user) {
             $user_x_amount = "user_${id}_amount";
@@ -34,7 +35,7 @@ while ($i-- > 0) {
                 $row["${user_x_amount}_color"] = '';
             }
         }
-        $total_balance += $row['amount'];
+        $total_balance += $total_amount;
     } else {
         $row['class'] = ($row['repeated']) ? 'transaction-repeat' : 'transaction-single';
         $total_amount = 0;
