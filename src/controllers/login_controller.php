@@ -50,6 +50,87 @@ class LoginController {
         $this->view();
     }
 
+    public function generate_code() {
+        global $CONFIG;
+        global $PAGES;
+        global $SRC;
+        global $LIB;
+
+        $email = $this->session['login-email'];
+        $curr_user = null;
+        foreach ($this->all_users as $user) {
+            if ($user->email === $email) {
+                $curr_user = $user;
+                break;
+            }
+        }
+
+        clear_session();
+        $rec_code_table = $CONFIG['db']['tables']['recovery_codes'];
+        $return = array(); // to be turned into json and sent as response
+        if ($curr_user != null) {
+            $code = null;
+            $query = sprintf('SELECT code FROM %s WHERE user_id=%s;', $rec_code_table, $curr_user->id);
+            $result = $this->db->query($query);
+            if ($entry = $result->fetch_assoc()) {
+                $code = $entry['code'];
+            } else {
+                require_once "$LIB/util.php";
+                $code = generate_random_word_comb();
+                $query = sprintf('INSERT INTO %s (user_id, code) VALUES (%s, "%s");', $rec_code_table, $curr_user->id, $code);
+                $this->db->query($query);
+            }
+            $recovery_string = "Please enter the following code to continue your recovery process: $code. If you did not initialize this process, please contact an admin.";
+            email(array($curr_user), "House Banking Password Recovery", $recovery_string, $recovery_string);
+            $return['success'] = '1';
+        } else {
+            $return['success'] = '0';
+        }
+        echo json_encode($return, JSON_FORCE_OBJECT); // should be in the view but wtvr
+    }
+
+    public function recover() {
+        global $CONFIG;
+        global $PAGES;
+        global $SRC;
+        global $LIB;
+
+        $email = $this->session['login-email'];
+        $entered_code = $this->session['recovery-code'];
+        $curr_user = null;
+        foreach ($this->all_users as $user) {
+            if ($user->email === $email) {
+                $curr_user = $user;
+                break;
+            }
+        }
+
+        clear_session();
+        $rec_code_table = $CONFIG['db']['tables']['recovery_codes'];
+        if ($curr_user != null) {
+            $code = null;
+            $query = sprintf('SELECT code FROM %s WHERE user_id=%s;', $rec_code_table, $curr_user->id);
+            $result = $this->db->query($query);
+            if ($entry = $result->fetch_assoc()) {
+                $code = $entry['code'];
+            }
+            if ($entered_code === $code) {
+                $user_table = $CONFIG['db']['tables']['userinfo'];
+                $hashed_pass = password_hash($code, PASSWORD_DEFAULT);
+                $query = sprintf('UPDATE %s SET pass_salt_hash="%s" WHERE id=%s;', $user_table, $hashed_pass, $curr_user->id);
+                $this->db->query($query);
+                $query = sprintf('DELETE FROM %s WHERE user_id=%s;', $rec_code_table, $curr_user->id);
+                $this->db->query($query);
+                $this->status = 'recovery_done';
+            } else {
+                $this->status = 'wrong_recovery';
+            }
+        } else {
+            $this->status = 'wrong_recovery';
+        }
+        $this->view();
+    }
+
     public function logout() {
         $this->curr_user = null;
         $this->view();
@@ -76,6 +157,10 @@ class LoginController {
                 $color = 'red';
                 $message = 'Incorrect Email or Password! Please try again.';
                 break;
+            case 'wrong_recovery':
+                $color = 'red';
+                $message = 'Email or code incorrect.';
+                break;
             case 'deleted':
                 $color = 'red';
                 $message = 'Account deleted! Please contact an admin.';
@@ -95,6 +180,10 @@ class LoginController {
             case 'just_registered':
                 $color = 'green';
                 $message = 'Successfully registered. Please log in.';
+                break;
+            case 'recovery_done':
+                $color = 'green';
+                $message = 'Successfully recovered password. Please log in with the recovery code as password and edit the password upon login.';
                 break;
             default:
                 $color = 'red';

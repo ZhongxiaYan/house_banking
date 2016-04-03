@@ -20,7 +20,6 @@ if ($mysqli->connect_error) {
     die('Connection failed: ' . $mysqli->connect_error);
 }
 
-
 // Post/Redirect/Get structure for form submission: move all $_POST into $_SESSION for further processing
 if (array_key_exists('submission', $_GET)) { // submitted some form, redirect to the same page
     $_SESSION['action'] = $_GET['submission'];

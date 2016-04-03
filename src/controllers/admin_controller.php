@@ -145,6 +145,8 @@ class AdminController {
 
     private function register_code() {
         global $CONFIG;
+        global $LIB;
+        require_once "$LIB/util.php";
         $session = $this->session;
         $register_code_table = $CONFIG['db']['tables']['register_codes'];
 
@@ -163,12 +165,7 @@ class AdminController {
             }
             $this->status = 'deleted_code';
         } else if (array_key_exists('generate', $session)) {
-            $new_code = '';
-            $lines = file($CONFIG['paths']['word_list']);
-            for ($i = 0; $i < 5; $i++) {
-                $rand = rand(0, 998);
-                $new_code .= preg_replace('/\s+/S', "", $lines[$rand]);
-            }
+            $new_code = generate_random_word_comb();
             $query = sprintf('INSERT INTO %s (code) VALUES ("%s");', $register_code_table, $new_code);
             $this->db->query($query);
             $this->status = 'generated_code';

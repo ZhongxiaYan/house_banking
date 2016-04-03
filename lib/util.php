@@ -64,4 +64,49 @@ function p($string) {
     echo htmlspecialchars($string);
 }
 
+function generate_random_word_comb() {
+    global $CONFIG;
+    $new_word = '';
+    $lines = file($CONFIG['paths']['word_list']);
+    for ($i = 0; $i < 5; $i++) {
+        $rand = rand(0, 998);
+        $new_word .= preg_replace('/\s+/S', "", $lines[$rand]);
+    }
+    return $new_word;
+}
+
+function email($users, $subject, $body, $altbody) {
+    global $CONFIG;
+    global $PAGES;
+    require_once $PAGES['autoload'];
+    $mail = new PHPMailer();
+    // $mail->SMTPDebug = 3;
+
+    $mail->isSMTP();
+    $mail->Host = "smtp.gmail.com";
+    $mail->SMTPAuth = true;
+    $mail->Username = $CONFIG['mailer']['email'];
+    $mail->Password = $CONFIG['mailer']['password'];
+    $mail->SMTPSecure = 'tls';
+    $mail->Port = 587;
+
+    $mail->setFrom($CONFIG['mailer']['email'], 'Maid');
+    foreach ($users as $user) {
+        $mail->addAddress($user->email, $user->name);
+    }
+
+    $mail->isHTML(true);
+
+    $mail->Subject = $subject;
+    $mail->Body    = $body;
+    $mail->AltBody = $altbody;
+
+    if(!$mail->send()) {
+        echo 'Message could not be sent.';
+        echo 'Mailer Error: ' . $mail->ErrorInfo;
+        return false;
+    }
+    return true;
+}
+
 ?>

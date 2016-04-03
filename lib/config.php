@@ -12,13 +12,18 @@ $CONFIG = array(
         'password' => $url['pass'],
         'host' => $url['host'],
         'tables' => array(
-            'userinfo' => 'userinfo',
-            'deposits' => 'userpaymenthistory',
-            'transactions_single' => 'transactions',
-            'transactions_repeated' => 'repeatedtransactions',
-            'cellinfo' => 'cellinfo',
-            'register_codes' => 'registercodes'
+            'userinfo' => 'UserInfo',
+            'deposits' => 'UserPaymentHistory',
+            'transactions_single' => 'Transactions',
+            'transactions_repeated' => 'RepeatedTransactions',
+            'cellinfo' => 'Cellinfo',
+            'register_codes' => 'RegisterCodes',
+            'recovery_codes' => 'RecoveryCodes'
         )
+    ),
+    'mailer' => array (
+        'email' => getenv('HOUSE_EMAIL_ADDRESS'),
+        'password' => getenv('HOUSE_EMAIL_PASSWORD')
     ),
     'paths' => array(
         'resources' => '/house_banking/resources',
@@ -43,7 +48,7 @@ $LIB = "$ROOT_DIR/lib";
 // map each controller to its possible actions
 $CONTROLLER_TO_ACTIONS = array(
     'register' => ['view', 'register'],
-    'login' => ['view', 'login', 'logout'],
+    'login' => ['view', 'login', 'generate_code', 'recover', 'logout'],
     'index' => ['view', 'alter_table', 'check_table'],
     'balance' => ['view', 'deposit_add', 'deposit_edit', 'deposit_delete', 
                   'transaction_add', 'transaction_edit', 'transaction_delete', 
@@ -55,7 +60,8 @@ $CONTROLLER_TO_ACTIONS = array(
 
 $PAGES = array(
     'front' => "$SRC/controllers/front_controller.php",
-    'util' => "$LIB/util.php"
+    'util' => "$LIB/util.php",
+    'autoload' => "$ROOT_DIR/vendor/autoload.php"
 );
 foreach ($CONTROLLER_TO_ACTIONS as $key => $value) { // add the links from $CONTROLLER_TO_ACTIONS
     $PAGES[$key] = "$key.php";
