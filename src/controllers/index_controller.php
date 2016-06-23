@@ -156,7 +156,6 @@ class IndexController {
         global $PAGES;
         global $CONFIG;
 
-        clear_session();
 
         $page = $this->page;
         $user_session_token = $this->session['user_session_token'];
@@ -174,11 +173,13 @@ class IndexController {
         $columns = 0;
         $this->get_dimensions($cell_map, $rows, $columns); // get the actual dimensions
         $editable_table = $this->convert_cells_to_table($cell_map, $rows, $columns);
-        
+
         require_once "$SRC/models/deposit_table.php";
         require_once "$SRC/models/transaction_table.php";        
         require_once "$SRC/views/calculate_house_table.php";
         require_once "$SRC/views/index_view.php";
+        
+        clear_session();
     }
 
     /**
